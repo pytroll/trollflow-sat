@@ -1,6 +1,7 @@
 """Classes for generating image composites for Trollflow based Trollduction"""
 
 import logging
+import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow import utils
@@ -41,14 +42,17 @@ class Resampler(AbstractWorkflowComponent):
         except KeyError:
             proj_method = "nearest"
         try:
-            radius = context["radius"]["content"]
-            if radius is None:
-                self.logger.debug("Using default search radius.")
-            else:
-                self.logger.debug("Using search radius %d meters.",
-                                  int(radius))
+            area = glbl.area.area_id
+            area_config = product_config["product_list"][area]
+            radius = area_config.get("srch_radius",
+                                     context["radius"]["content"])
         except KeyError:
             radius = None
+
+        if radius is None:
+            self.logger.debug("Using default search radius.")
+        else:
+            self.logger.debug("Using search radius %d meters.", int(radius))
 
         for area_name in glbl.info["product_list"]:
             # Reproject only needed channels
