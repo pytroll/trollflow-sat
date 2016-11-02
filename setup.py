@@ -44,7 +44,7 @@ setup(name="trollflow-sat",
       scripts=[],
       data_files=[],
       zip_safe=False,
-      install_requires=['trollflow',],
+      install_requires=['trollflow', 'posttroll'],
       tests_require=['mock'],
       test_suite='trollflow-sat.tests.suite',
       )
