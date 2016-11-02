@@ -1,3 +1,5 @@
+import os.path
+
 from trollsift import compose
 
 def get_prerequisites_yaml(global_data, prod_list, area_list):
@@ -17,7 +19,14 @@ def create_fnames(info, prod_list, prod_id):
     area_name = info["areaname"]
 
     products = prod_list["product_list"][area_name]["products"]
-    pattern = products[prod_id]["fname_pattern"]
+    try:
+        out_dir = products[prod_id]["out_dir"]
+    except KeyError:
+        try:
+            out_dir = prod_list["common"]["out_dir"]
+        except KeyError:
+            out_dir = ""
+    pattern = os.path.join(out_dir, products[prod_id]["fname_pattern"])
     prod_name = products[prod_id]["productname"]
     formats = products[prod_id].get("formats", ["",])
     info["productname"] = prod_name
