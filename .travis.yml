@@ -1,0 +1,12 @@
+language: python
+python:
+  - '2.7'
+before_install:
+ - sudo apt-get install libhdf5-serial-dev netcdf-bin libnetcdf-dev python-scipy
+ - pip install trollflow
+install:
+  - pip install .
+  - pip install mock
+  - pip install coveralls
+script: coverage run --source=trollflow-sat setup.py test
+after_success: coveralls
