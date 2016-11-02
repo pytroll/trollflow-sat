@@ -3,8 +3,7 @@
 import logging
 
 from trollflow.workflow_component import AbstractWorkflowComponent
-from trollduction.xml_read import ProductList
-
+from trollflow import utils
 
 class Resampler(AbstractWorkflowComponent):
 
@@ -22,7 +21,8 @@ class Resampler(AbstractWorkflowComponent):
     def invoke(self, context):
         """Invoke"""
         glbl = context["content"]
-        product_config = ProductList(context["product_list"]["content"])
+        with open(context["product_list"]["content"], "r") as fid:
+            product_config = yaml.load(fid)
 
         # Handle config options
         try:
@@ -52,7 +52,8 @@ class Resampler(AbstractWorkflowComponent):
 
         for area_name in glbl.info["product_list"]:
             # Reproject only needed channels
-            channels = get_prerequisites_xml(glbl, product_config, area_name)
+            channels = utils.get_prerequisites_yaml(glbl, product_config,
+                                                    area_name)
             self.logger.info("Resampling to area %s", area_name)
             lcl = glbl.project(area_name, channels=channels,
                                precompute=precompute,
@@ -66,20 +67,3 @@ class Resampler(AbstractWorkflowComponent):
     def post_invoke(self):
         """Post-invoke"""
         pass
-
-
-def get_prerequisites_xml(global_data, product_config, area_name):
-    """Get composite prerequisite channels for a group"""
-    reqs = set()
-    for group in product_config.groups:
-        for area in group.data:
-            if area.attrib["name"] != area_name:
-                continue
-            for product in area:
-                try:
-                    composite = getattr(global_data.image,
-                                        product.attrib['id'])
-                except AttributeError:
-                    continue
-                reqs |= composite.prerequisites
-    return reqs

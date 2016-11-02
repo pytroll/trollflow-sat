@@ -1,10 +1,12 @@
 
 """Class for reading satellite data for Trollflow based Trollduction"""
 
+import logging
+import yaml
+
+from trollflow import utils
 from trollflow.workflow_component import AbstractWorkflowComponent
 from mpop.satellites import GenericFactory as GF
-from trollduction.xml_read import ProductList
-import logging
 
 
 class SceneLoader(AbstractWorkflowComponent):
@@ -22,21 +24,19 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        product_config = ProductList(context["product_list"]["content"])
+        with open(context["product_list"]["content"], "r") as fid:
+            product_config = yaml.load(fid)
         msg = context['content']
         global_data = self.create_scene_from_message(msg)
         if global_data is None:
             return
-        global_data.info['product_list'] = {}
-        use_extern_calib = product_config.attrib.get("use_extern_calib",
-                                                     "False").lower() in \
-            ["true", "1", "yes"]
 
-        for group in product_config.groups:
-            grp_area_def_names = [item.attrib["id"]
-                                  for item in group.data
-                                  if item.tag == "area"]
-            reqs = get_prerequisites_xml(global_data, group.data)
+        use_extern_calib = product_config["common"].get("use_extern_calib",
+                                                        "False")
+
+        for group in product_config["groups"]:
+            grp_area_def_names = product_config["groups"][group]
+            reqs = utils.get_prerequisites_yaml(global_data, group.data)
             prev_reqs = {itm.name for itm in global_data.loaded_channels()}
             reqs_to_unload = prev_reqs - reqs
             if len(reqs_to_unload) > 0:
@@ -47,10 +47,6 @@ class SceneLoader(AbstractWorkflowComponent):
                              str(sorted(reqs)))
             global_data.load(reqs, area_def_names=grp_area_def_names,
                              use_extern_calib=use_extern_calib)
-            for area_item in group.data:
-                global_data.info["product_list"][area_item.attrib['id']] = \
-                    [item.attrib["id"] for
-                     item in area_item if item.tag == "product"]
 
             context["output_queue"].put(global_data)
         del global_data
@@ -103,15 +99,3 @@ class SceneLoader(AbstractWorkflowComponent):
 
         return global_data
 
-
-def get_prerequisites_xml(global_data, grp_config):
-    """Get composite prerequisite channels for a group"""
-    reqs = set()
-    for area in grp_config:
-        for product in area:
-            try:
-                composite = getattr(global_data.image, product.attrib['id'])
-            except AttributeError:
-                continue
-            reqs |= composite.prerequisites
-    return reqs
