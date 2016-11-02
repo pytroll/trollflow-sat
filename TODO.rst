@@ -6,3 +6,6 @@ compositor
 ==========
 - check Sun zenith-angles
 
+unittests
+=========
+- add 'em
