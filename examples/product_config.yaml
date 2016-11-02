@@ -1,0 +1,42 @@
+common:
+  output_dir: &output_dir
+    /tmp
+  use_extern_calib: false
+
+groups:
+  europe:
+    - eurol
+    - euron1
+
+product_list:
+  eurol: # area ID used to get the area definition
+    areaname: eurol # name used in filename composing
+    # min_coverage: 25
+    # srch_radius: 10000
+    products: &eurol_products
+      - vis08: # product ID for getting the compositor
+        productname: vis08 # name used in filename composing
+        sunzen_day_maximum: 100
+        # sunzen_lonlat: [25, 60]
+        # sunzen_night_minimum: 80
+        output_dir: *output_dir
+        formats:
+          - png
+          - tif
+          # - nc
+        fname_pattern: {time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}
+        
+      - ir108: # product ID for getting the compositor
+        productname: ir108 # name used in filename composing
+        sunzen_night_minimum: 80
+        # sunzen_lonlat: [25, 60]
+        output_dir: *output_dir
+        formats:
+          - png
+          - tif
+          # - nc
+        fname_pattern: {time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}
+        
+  euron1: # area ID used to get the area definition
+    areaname: euron1 # name used in filename composing
+    products: *eurol_products
