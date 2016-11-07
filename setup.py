@@ -20,14 +20,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Setup for trollflow.
+"""Setup for trollflow-sat.
 """
 from setuptools import setup
 import imp
 
-version = imp.load_source('trollflow-sat.version', 'trollflow-sat/version.py')
+version = imp.load_source('trollflow_sat.version', 'trollflow_sat/version.py')
 
-setup(name="trollflow-sat",
+setup(name="trollflow_sat",
       version=version.__version__,
       description='Pytroll workflow plugins for satellite data',
       author='Panu Lahtinen',
@@ -40,11 +40,11 @@ setup(name="trollflow-sat",
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/pytroll/trollflow-sat",
-      packages=['trollflow-sat',],
+      packages=['trollflow_sat',],
       scripts=[],
       data_files=[],
       zip_safe=False,
       install_requires=['trollflow', 'posttroll'],
       tests_require=['mock'],
-      test_suite='trollflow-sat.tests.suite',
+      test_suite='trollflow_sat.tests.suite',
       )
