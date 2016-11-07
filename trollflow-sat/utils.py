@@ -2,6 +2,8 @@ import os.path
 
 from trollsift import compose
 
+PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png")
+
 def get_prerequisites_yaml(global_data, prod_list, area_list):
     """Get composite prerequisite channels for a list of areas"""
     reqs = set()
@@ -14,27 +16,40 @@ def get_prerequisites_yaml(global_data, prod_list, area_list):
             reqs |= composite.prerequisites
     return reqs
 
+
 def create_fnames(info, prod_list, prod_id):
     """Create filename for product *prod*"""
     area_name = info["areaname"]
 
+    # List of products
     products = prod_list["product_list"][area_name]["products"]
-    try:
-        out_dir = products[prod_id]["out_dir"]
-    except KeyError:
-        try:
-            out_dir = prod_list["common"]["out_dir"]
-        except KeyError:
-            out_dir = ""
-    pattern = os.path.join(out_dir, products[prod_id]["fname_pattern"])
+
+    # Find output directory
+    out_dir = products[prod_id].get("out_dir", "")
+    if out_dir == "":
+        out_dir = prod_list["common"].get("out_dir", "")
+
+    # Find filename pattern
+    pattern = products[prod_id].get("fname_pattern", "")
+    if pattern == "":
+        pattern = prod_list["common"].get("fname_pattern", PATTERN)
+
+    # Join output dir and filename pattern
+    pattern = os.path.join(out_dir, pattern)
+
+    # Find output formats
+    formats = products[prod_id].get("formats", ["", ])
+    if formats[0] == "":
+        formats = products["common"].get("formats", ["", ])
+
     prod_name = products[prod_id]["productname"]
-    formats = products[prod_id].get("formats", ["",])
     info["productname"] = prod_name
-    if pattern is not None:
+
+    if pattern != "":
         fnames = []
         for fmt in formats:
             info["format"] = fmt
             fnames.append(compose(pattern, info))
         return (fnames, prod_name)
     else:
-        return ([], prod_name)
+        return (None, prod_name)
