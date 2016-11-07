@@ -1,4 +1,5 @@
 import os.path
+import logging
 
 from trollsift import compose
 
@@ -32,6 +33,8 @@ def create_fnames(info, prod_list, prod_id):
     # Find filename pattern
     pattern = products[prod_id].get("fname_pattern", "")
     if pattern == "":
+        logging.warning("No pattern was given, using built-in default: %s",
+                        PATTERN)
         pattern = prod_list["common"].get("fname_pattern", PATTERN)
 
     # Join output dir and filename pattern
@@ -45,11 +48,8 @@ def create_fnames(info, prod_list, prod_id):
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
 
-    if pattern != "":
-        fnames = []
-        for fmt in formats:
-            info["format"] = fmt
-            fnames.append(compose(pattern, info))
-        return (fnames, prod_name)
-    else:
-        return (None, prod_name)
+    fnames = []
+    for fmt in formats:
+        info["format"] = fmt
+        fnames.append(compose(pattern, info))
+    return (fnames, prod_name)
