@@ -4,6 +4,7 @@ import logging
 from trollsift import compose
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png")
+FORMAT = "png"
 
 def get_prerequisites_yaml(global_data, prod_list, area_list):
     """Get composite prerequisite channels for a list of areas"""
@@ -43,7 +44,7 @@ def create_fnames(info, prod_list, prod_id):
     # Find output formats
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
-        formats = products["common"].get("formats", ["", ])
+        formats = products["common"].get("formats", [FORMAT, ])
 
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
