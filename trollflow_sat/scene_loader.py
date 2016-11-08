@@ -4,7 +4,7 @@
 import logging
 import yaml
 
-from trollflow import utils
+from trollflow_sat import utils
 from trollflow.workflow_component import AbstractWorkflowComponent
 from mpop.satellites import GenericFactory as GF
 
@@ -36,7 +36,9 @@ class SceneLoader(AbstractWorkflowComponent):
 
         for group in product_config["groups"]:
             grp_area_def_names = product_config["groups"][group]
-            reqs = utils.get_prerequisites_yaml(global_data, group.data)
+            reqs = utils.get_prerequisites_yaml(global_data,
+                                                product_config["product_list"],
+                                                grp_area_def_names)
             prev_reqs = {itm.name for itm in global_data.loaded_channels()}
             reqs_to_unload = prev_reqs - reqs
             if len(reqs_to_unload) > 0:
@@ -98,4 +100,3 @@ class SceneLoader(AbstractWorkflowComponent):
         global_data.info['time'] = time_slot
 
         return global_data
-
