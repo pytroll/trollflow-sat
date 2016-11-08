@@ -3,8 +3,9 @@ import logging
 
 from trollsift import compose
 
-PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png")
+PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
+
 
 def get_prerequisites_yaml(global_data, prod_list, area_list):
     """Get composite prerequisite channels for a list of areas"""
@@ -27,9 +28,13 @@ def create_fnames(info, prod_list, prod_id):
     products = prod_list["product_list"][area_name]["products"]
 
     # Find output directory
-    out_dir = products[prod_id].get("out_dir", "")
-    if out_dir == "":
-        out_dir = prod_list["common"].get("out_dir", "")
+    output_dir = products[prod_id].get("output_dir", "")
+    if output_dir == "":
+        output_dir = prod_list["common"].get("output_dir", "")
+
+    if output_dir == "":
+        logging.warning("No output directory specified, "
+                        "saving to current directory!")
 
     # Find filename pattern
     pattern = products[prod_id].get("fname_pattern", "")
@@ -39,7 +44,7 @@ def create_fnames(info, prod_list, prod_id):
         pattern = prod_list["common"].get("fname_pattern", PATTERN)
 
     # Join output dir and filename pattern
-    pattern = os.path.join(out_dir, pattern)
+    pattern = os.path.join(output_dir, pattern)
 
     # Find output formats
     formats = products[prod_id].get("formats", ["", ])
