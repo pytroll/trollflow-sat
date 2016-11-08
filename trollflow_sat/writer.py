@@ -111,15 +111,15 @@ class DataWriter(Thread):
                         area = getattr(obj, "area")
                         to_send = {"nominal_time": getattr(obj, "time_slot"),
                                    "uid": os.path.basename(fname),
-                                   "uri": fname,
+                                   "uri": os.path.abspath(fname),
                                    "area": {"name": area.name,
                                             "area_id": area.area_id,
                                             "proj_id": area.proj_id,
                                             "proj4": area.proj4_string,
                                             "shape": (area.x_size, area.y_size)
-                                   },
+                                            },
                                    "productname": obj.info["productname"]
-                        }
+                                   }
                         # if self._topic is not None:
                         if self._topic is not None:
                             msg = Message(self._topic, "file", to_send)
