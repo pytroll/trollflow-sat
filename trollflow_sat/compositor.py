@@ -4,8 +4,9 @@ import logging
 import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
-from trollflow import utils
+from trollflow_sat import utils
 from trollsift import compose
+
 
 class CompositeGenerator(AbstractWorkflowComponent):
 
@@ -24,7 +25,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
         """Invoke"""
         data = context["content"]
         with open(context["product_list"]["content"], "r") as fid:
-            prod_list = yaml.load(fid)
+            product_config = yaml.load(fid)
         for prod in data.info["products"]:
             self.logger.info("Creating composite %s", prod)
             try:
@@ -39,8 +40,8 @@ class CompositeGenerator(AbstractWorkflowComponent):
 
             # Get filename and product name from product config
             data.info["areaname"] = data.area.area_id
-            fnames, productname = utils.create_fnames(data.info, prod_list,
-                                                      prod)
+            fnames, productname = utils.create_fnames(
+                data.info, product_config, prod)
 
             if fnames is None:
                 self.logger.error("Could not generate valid filename(s), "
