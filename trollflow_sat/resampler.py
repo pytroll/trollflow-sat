@@ -4,7 +4,8 @@ import logging
 import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
-from trollflow import utils
+from trollflow_sat import utils
+
 
 class Resampler(AbstractWorkflowComponent):
 
@@ -46,7 +47,7 @@ class Resampler(AbstractWorkflowComponent):
             area_config = product_config["product_list"][area]
             radius = area_config.get("srch_radius",
                                      context["radius"]["content"])
-        except KeyError:
+        except (AttributeError, KeyError):
             radius = None
 
         if radius is None:
@@ -54,16 +55,18 @@ class Resampler(AbstractWorkflowComponent):
         else:
             self.logger.debug("Using search radius %d meters.", int(radius))
 
-        for area_name in glbl.info["product_list"]:
+        prod_list = product_config["product_list"]
+        for area_name in prod_list:
             # Reproject only needed channels
-            channels = utils.get_prerequisites_yaml(glbl, product_config,
-                                                    area_name)
+            channels = utils.get_prerequisites_yaml(glbl,
+                                                    prod_list,
+                                                    [area_name, ])
             self.logger.info("Resampling to area %s", area_name)
             lcl = glbl.project(area_name, channels=channels,
                                precompute=precompute,
                                mode=proj_method, radius=radius, nprocs=nprocs)
             lcl.info["areaname"] = area_name
-            lcl.info["products"] = glbl.info["product_list"][area_name]
+            lcl.info["products"] = prod_list[area_name]['products']
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
