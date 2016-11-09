@@ -26,12 +26,13 @@
 # from trollduction.tests import test_listener
 import unittest
 import doctest
-# from trollflow-sat.tests import (test_,)
+from trollflow_sat.tests import (test_utils,)
+
 
 def suite():
     """The global test suite.
     """
     mysuite = unittest.TestSuite()
-    mysuite.addTests(test_XXX.suite())
+    mysuite.addTests(test_utils.suite())
 
     return mysuite
