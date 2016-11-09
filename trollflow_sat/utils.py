@@ -20,17 +20,17 @@ def get_prerequisites_yaml(global_data, prod_list, area_list):
     return reqs
 
 
-def create_fnames(info, prod_list, prod_id):
+def create_fnames(info, product_config, prod_id):
     """Create filename for product *prod*"""
     area_name = info["areaname"]
 
     # List of products
-    products = prod_list["product_list"][area_name]["products"]
+    products = product_config["product_list"][area_name]["products"]
 
     # Find output directory
     output_dir = products[prod_id].get("output_dir", "")
     if output_dir == "":
-        output_dir = prod_list["common"].get("output_dir", "")
+        output_dir = product_config["common"].get("output_dir", "")
 
     if output_dir == "":
         logging.warning("No output directory specified, "
@@ -39,9 +39,12 @@ def create_fnames(info, prod_list, prod_id):
     # Find filename pattern
     pattern = products[prod_id].get("fname_pattern", "")
     if pattern == "":
+        pattern = product_config["common"].get("fname_pattern", "")
+
+    if pattern == "":
         logging.warning("No pattern was given, using built-in default: %s",
                         PATTERN)
-        pattern = prod_list["common"].get("fname_pattern", PATTERN)
+        pattern = PATTERN
 
     # Join output dir and filename pattern
     pattern = os.path.join(output_dir, pattern)
@@ -49,7 +52,7 @@ def create_fnames(info, prod_list, prod_id):
     # Find output formats
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
-        formats = products["common"].get("formats", [FORMAT, ])
+        formats = product_config["common"].get("formats", [FORMAT, ])
 
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
