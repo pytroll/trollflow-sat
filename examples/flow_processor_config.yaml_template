@@ -9,7 +9,7 @@ work:
     - type: daemon
       name: listener
       components:
-        - class: !!python/object:trollflow-sat.listener.ListenerContainer
+        - class: !!python/object:posttroll.listener.ListenerContainer
             topics:
               - /foo/bar
               - /foo/baz
