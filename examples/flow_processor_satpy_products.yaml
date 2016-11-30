@@ -1,0 +1,21 @@
+common:
+  output_dir: &output_dir
+    /tmp/
+  use_extern_calib: false
+  fname_pattern: &fname
+    "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}"
+  formats: &formats
+    - png
+
+groups:
+  europe:
+    - euron1
+
+product_list:
+  euron1:
+    areaname: euron1
+    products:
+      overview:
+        productname: overview
+        output_dir: *output_dir
+        formats: *formats

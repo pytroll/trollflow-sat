@@ -1,0 +1,50 @@
+config:
+    - product_list: &product_list
+        /home/lahtinep/Software/pytroll/config_files/flow_processor_satpy_products.yaml
+    - log_config:
+        /home/lahtinep/Software/pytroll/config_files/flow_processor_log_config.ini
+
+work:
+    - type: daemon
+      name: listener
+      components:
+        - class: !!python/object:posttroll.listener.ListenerContainer
+            topics:
+              - /new/file/yay
+
+    - type: workflow
+      name: satpy_compositor
+      Workflow:
+        - trollflow_sat.satpy_compositor.SceneLoader:
+            product_list: *product_list
+
+    - type: workflow
+      name: satpy_resampler
+      Workflow:
+        - trollflow_sat.satpy_resampler.Resampler:
+            # Use "null" instead of "None"
+            radius: null
+            precompute: True
+            nprocs: 2
+            proj_method: nearest
+            product_list: *product_list
+
+    - type: daemon
+      name: satpy_writer
+      components:
+        - class: !!python/object:trollflow_sat.satpy_writer.DataWriterContainer
+            nameservers: []
+            port: 0
+            topic: /another/image/yay
+            save_settings:
+              compression: 6
+              # Use "null" instead of "None"
+              tags: null
+              # Use "null" instead of "None"
+              fformat: null
+              # Use "null" instead of "None"
+              gdal_options: null
+              # Use "null" instead of "None"
+              fformat: null
+              blocksize: 0
+              # 256
