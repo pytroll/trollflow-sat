@@ -86,6 +86,27 @@ class TestUtils(unittest.TestCase):
                          "/tmp/2016/11/07/" +
                          "2016_11_07_12_00_asd.tif")
 
+        # Change filename pattern to one where "time" is changed to
+        # "satellite_time"
+        self.config["common"]["fname_pattern"] = \
+            "{satellite_time:%Y_%m_%d_%H_%M}_asd.{format}"
+        fnames, prod_name = utils.create_fnames(self.info,
+                                                self.config,
+                                                "image_compositor_name")
+        self.assertEqual(fnames[0],
+                         "/tmp/2016/11/07/" +
+                         "2016_11_07_12_00_asd.png")
+
+        # Change metadata so that the time name doesn't match pattern
+        self.info['foo_time'] = dt.datetime(2016, 11, 7, 12, 0)
+        del self.info['time']
+        fnames, prod_name = utils.create_fnames(self.info,
+                                                self.config,
+                                                "image_compositor_name")
+        self.assertEqual(fnames[0],
+                         "/tmp/2016/11/07/" +
+                         "2016_11_07_12_00_asd.png")
+
 
 def suite():
     """The suite for test_utils
