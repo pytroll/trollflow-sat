@@ -32,7 +32,7 @@ product_list:
     # In YAML, it is possible to use tags so the same thing can be
     # used again without writing it out
     products: &eurol_products
-      - vis08: # product ID for getting the compositor
+      vis08: # product ID for getting the compositor
         productname: vis08 # name used in filename composing
         sunzen_day_maximum: 100
         # sunzen_lonlat: [25, 60]
@@ -48,7 +48,7 @@ product_list:
         # this product
         fname_pattern: "{time:%Y%m%d%H%M}_{platform_name}_{areaname}_{productname}.{format}"
         
-      - ir108: # product ID for getting the compositor
+      ir108: # product ID for getting the compositor
         productname: ir108 # name used in filename composing
         sunzen_night_minimum: 80
         # sunzen_lonlat: [25, 60]
