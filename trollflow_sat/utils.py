@@ -45,8 +45,8 @@ def create_fnames(info, product_config, prod_id):
         pattern = product_config["common"].get("fname_pattern", "")
 
     if pattern == "":
-        logging.warning("No pattern was given, using built-in default: %s",
-                        PATTERN)
+        LOGGER.warning("No pattern was given, using built-in default: %s",
+                       PATTERN)
         pattern = PATTERN
 
     # Join output dir and filename pattern
@@ -63,29 +63,32 @@ def create_fnames(info, product_config, prod_id):
     # Find the name of the available 'nominal_time'
     time_name = None
     for key in info:
-        if "time" in key and "end" not in key:
+        if "time" in key and "end" not in key and "proc" not in key:
             time_name = key
+            LOGGER.debug("metadata time name is '%s'", time_name)
             break
 
     if time_name is None and "time" in pattern:
         return None
 
-    # Adjust the pattern if the available time_name is not in it.
-    # First check if there is any time definitions
-    if time_name not in pattern:
-        # Get parse definitions and try to figure out if there's
-        # an item for time
-        parsedefs, _ = extract_parsedef(pattern)
-        for itm in parsedefs:
-            if isinstance(itm, dict):
-                key, val = itm.items()[0]
-                # Need to exclude 'end_time'
-                if ("time" in key or "%" in val) and \
-                   "end" not in key:
-                    LOGGER.debug("Updating pattern from '%s' ...", pattern)
-                    pattern = pattern.replace(key, time_name)
-                    LOGGER.debug("... to '%s'", pattern)
-                    break
+    # Adjust filename pattern so that time_name is present.
+    # Get parse definitions and try to figure out if there's
+    # an item for time
+    parsedefs, _ = extract_parsedef(pattern)
+    for itm in parsedefs:
+        if isinstance(itm, dict):
+            key, val = itm.items()[0]
+            if val is None:
+                continue
+            # Need to exclude 'end_time' and 'proc_time' / 'processing_time'
+            if ("time" in key or "%" in val) and \
+               "end" not in key and key != time_name:
+                LOGGER.debug("Updating pattern from '%s' ...", pattern)
+
+                while '{' + key in pattern:
+                    pattern = pattern.replace('{' + key,
+                                              '{' + time_name)
+                LOGGER.debug("... to '%s'", pattern)
 
     fnames = []
     for fmt in formats:
@@ -112,9 +115,9 @@ def get_satpy_area_composite_names(product_config, area_name):
     return set(prod_list[area_name]['products'].keys())
 
 
-def find_time_name(info):
+def find_time_names(info):
     """Try to find the name for 'nominal' time"""
     for key in info:
-        if "time" in key and "end" not in key:
+        if "time" in key and "end" not in key and "proc" not in key:
             return key
     return None
