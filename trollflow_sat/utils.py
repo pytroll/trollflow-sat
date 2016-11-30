@@ -2,9 +2,12 @@ import os.path
 import logging
 
 from trollsift import compose
+from trollsift.parser import _extract_parsedef as extract_parsedef
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
+
+LOGGER = logging.getLogger(__name__)
 
 
 def get_prerequisites_yaml(global_data, prod_list, area_list):
@@ -33,8 +36,8 @@ def create_fnames(info, product_config, prod_id):
         output_dir = product_config["common"].get("output_dir", "")
 
     if output_dir == "":
-        logging.warning("No output directory specified, "
-                        "saving to current directory!")
+        LOGGER.warning("No output directory specified, "
+                       "saving to current directory!")
 
     # Find filename pattern
     pattern = products[prod_id].get("fname_pattern", "")
@@ -57,8 +60,61 @@ def create_fnames(info, product_config, prod_id):
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
 
+    # Find the name of the available 'nominal_time'
+    time_name = None
+    for key in info:
+        if "time" in key and "end" not in key:
+            time_name = key
+            break
+
+    if time_name is None and "time" in pattern:
+        return None
+
+    # Adjust the pattern if the available time_name is not in it.
+    # First check if there is any time definitions
+    if time_name not in pattern:
+        # Get parse definitions and try to figure out if there's
+        # an item for time
+        parsedefs, _ = extract_parsedef(pattern)
+        for itm in parsedefs:
+            if isinstance(itm, dict):
+                key, val = itm.items()[0]
+                # Need to exclude 'end_time'
+                if ("time" in key or "%" in val) and \
+                   "end" not in key:
+                    LOGGER.debug("Updating pattern from '%s' ...", pattern)
+                    pattern = pattern.replace(key, time_name)
+                    LOGGER.debug("... to '%s'", pattern)
+                    break
+
     fnames = []
     for fmt in formats:
         info["format"] = fmt
         fnames.append(compose(pattern, info))
+
     return (fnames, prod_name)
+
+
+def get_satpy_group_composite_names(product_config, group):
+    """Parse composite names from the product config for the given
+    group."""
+    composites = set()
+    prod_list = product_config['product_list']
+    for group in product_config['groups'][group]:
+        composites.update(set(prod_list[group]['products'].keys()))
+    return composites
+
+
+def get_satpy_area_composite_names(product_config, area_name):
+    """Parse composite names from the product config for the given
+    group."""
+    prod_list = product_config['product_list']
+    return set(prod_list[area_name]['products'].keys())
+
+
+def find_time_name(info):
+    """Try to find the name for 'nominal' time"""
+    for key in info:
+        if "time" in key and "end" not in key:
+            return key
+    return None
