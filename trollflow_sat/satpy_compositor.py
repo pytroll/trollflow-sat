@@ -61,9 +61,9 @@ class SceneLoader(AbstractWorkflowComponent):
         """Parse the message *msg* and return a corresponding MPOP scene.
         """
         if msg.type in ["file", 'collection', 'dataset']:
-            return self.create_scene_from_mda(msg.data)
+            return self.create_scene_from_mda(msg.data, msg.type)
 
-    def create_scene_from_mda(self, mda):
+    def create_scene_from_mda(self, mda, msg_type):
         """Read the metadata *mda* and return a corresponding MPOP scene.
         """
         start_time = (mda.get('start_time') or
@@ -78,16 +78,24 @@ class SceneLoader(AbstractWorkflowComponent):
         else:
             sensor = mda['sensor']
 
-        filename = mda['uri']
-        if not isinstance(filename, (list, set, tuple)):
-            filename = [filename]
+        if msg_type == "dataset":
+            filenames = []
+            for dset in mda["dataset"]:
+                filenames.append(dset["uri"])
+        elif msg_type == "collection":
+            raise NotImplementedError
+        else:
+            filenames = mda['uri']
+
+        if not isinstance(filenames, (list, set, tuple)):
+            filenames = [filenames]
 
         # Create satellite scene
         global_data = Scene(platform_name=platform_name,
                             sensor=sensor,
                             start_time=start_time,
                             end_time=end_time,
-                            filenames=filename)
+                            filenames=filenames)
 
         global_data.info.update(mda)
 
