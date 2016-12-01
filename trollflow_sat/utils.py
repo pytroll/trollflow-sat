@@ -115,7 +115,7 @@ def get_satpy_area_composite_names(product_config, area_name):
     return set(prod_list[area_name]['products'].keys())
 
 
-def find_time_names(info):
+def find_time_name(info):
     """Try to find the name for 'nominal' time"""
     for key in info:
         if "time" in key and "end" not in key and "proc" not in key:
