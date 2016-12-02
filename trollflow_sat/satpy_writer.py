@@ -125,11 +125,16 @@ class DataWriter(Thread):
                         writers = utils.get_writer_names(product_config, prod,
                                                          info["areaname"])
                         # product_config, prod_id, area_name
-                        for fname in fnames:
-                            self.logger.info("Saving %s", fname)
+                        for j, fname in enumerate(fnames):
+                            if writers[j]:
+                                self.logger.info("Saving %s with writer %s",
+                                                 fname, writers[j])
+                            else:
+                                self.logger.info(
+                                    "Saving %s with default writer", fname)
                             lcl.save_dataset(dataset_ids[i],
                                              filename=fname,
-                                             writer=writers[i],
+                                             writer=writers[j],
                                              **kwargs)
                             area = lcl[prod].info["area"]
                             to_send = {"nominal_time": info[time_name],
