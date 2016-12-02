@@ -127,7 +127,7 @@ def get_satpy_area_composite_names(product_config, area_name):
     """Parse composite names from the product config for the given
     group."""
     prod_list = product_config['product_list']
-    return set(prod_list[area_name]['products'].keys())
+    return prod_list[area_name]['products'].keys()
 
 
 def find_time_name(info):
