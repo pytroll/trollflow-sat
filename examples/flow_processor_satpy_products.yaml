@@ -5,7 +5,10 @@ common:
   fname_pattern: &fname
     "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}"
   formats: &formats
-    - png
+    - format: png
+      writer: null
+    - format: nc
+      writer: adaguc
 
 groups:
   europe:

@@ -55,7 +55,8 @@ def create_fnames(info, product_config, prod_id):
     # Find output formats
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
-        formats = product_config["common"].get("formats", [FORMAT, ])
+        formats = product_config["common"].get("formats", [{"format": FORMAT,
+                                                            "writer": None}])
 
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
@@ -92,10 +93,24 @@ def create_fnames(info, product_config, prod_id):
 
     fnames = []
     for fmt in formats:
-        info["format"] = fmt
+        info["format"] = fmt["format"]
         fnames.append(compose(pattern, info))
 
     return (fnames, prod_name)
+
+
+def get_writer_names(product_config, prod_id, area_name):
+    """Get writer names for the """
+    products = product_config["product_list"][area_name]["products"]
+    formats = products[prod_id].get("formats", ["", ])
+    if formats[0] == "":
+        formats = product_config["common"].get("formats", [{"format": FORMAT,
+                                                            "writer": None}])
+    writers = []
+    for fmt in formats:
+        writers.append(fmt.get("writer", None))
+
+    return writers
 
 
 def get_satpy_group_composite_names(product_config, group):
