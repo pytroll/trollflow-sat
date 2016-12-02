@@ -17,10 +17,12 @@
 """Unit tests for utils"""
 
 import unittest
-import trollflow_sat.utils as utils
-import yaml
 from StringIO import StringIO
 import datetime as dt
+from collections import OrderedDict
+
+from trollflow_sat import utils
+from trollflow.utils import ordered_load
 
 CONFIG_MINIMAL = """common:
   use_extern_calib: false
@@ -40,7 +42,7 @@ product_list:
 
 class TestUtils(unittest.TestCase):
 
-    config = yaml.load(StringIO(CONFIG_MINIMAL))
+    config = ordered_load(StringIO(CONFIG_MINIMAL))
     info = {'time': dt.datetime(2016, 11, 7, 12, 0),
             'platform_name': 'Meteosat-10',
             'areaname': 'EPSG4326',
@@ -75,7 +77,8 @@ class TestUtils(unittest.TestCase):
                          "2016_11_07_12_00_asd.png")
 
         # Add file formats
-        self.config["common"]["formats"] = ["png", "tif"]
+        self.config["common"]["formats"] = [OrderedDict([('format', 'png'), ]),
+                                            OrderedDict([('format', 'tif'), ])]
         fnames, prod_name = utils.create_fnames(self.info,
                                                 self.config,
                                                 "image_compositor_name")
@@ -88,8 +91,8 @@ class TestUtils(unittest.TestCase):
 
         # Change filename pattern to one where "time" is changed to
         # "satellite_time"
-        self.config["common"]["fname_pattern"] = \
-            "{satellite_time:%Y_%m_%d_%H_%M}_asd.{format}"
+        self.config["common"][
+            "fname_pattern"] = "{satellite_time:%Y_%m_%d_%H_%M}_asd.{format}"
         fnames, prod_name = utils.create_fnames(self.info,
                                                 self.config,
                                                 "image_compositor_name")

@@ -46,6 +46,6 @@ setup(name="trollflow_sat",
       zip_safe=False,
       install_requires=['pyyaml', 'trollflow', 'posttroll', 'trollsift',
                         'pykdtree', 'mipp', 'mpop'],
-      tests_require=[],
+      tests_require=['trollflow'],
       test_suite='trollflow_sat.tests.suite',
       )
