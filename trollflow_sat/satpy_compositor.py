@@ -46,7 +46,6 @@ class SceneLoader(AbstractWorkflowComponent):
             self.logger.info("Loading required data for this group: %s",
                              ', '.join(sorted(composites)))
             # use_extern_calib=use_extern_calib
-            global_data.load(["overview"])
             global_data.load(composites)
 
             context["output_queue"].put(global_data)
