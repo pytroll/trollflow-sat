@@ -75,13 +75,18 @@ class DataWriter(Thread):
     logger = logging.getLogger("DataWriter")
 
     def __init__(self, queue=None, save_settings=None,
-                 topic=None, port=0, nameservers=[]):
+                 topic=None, port=0, nameservers=None):
         Thread.__init__(self)
         self.queue = queue
         self._loop = False
         self._save_settings = save_settings
         self._port = port
-        self._nameservers = nameservers
+        if nameservers is None:
+            self._nameservers = []
+        else:
+            if type(nameservers) not in (list, tuple, set):
+                nameservers = [nameservers, ]
+            self._nameservers = nameservers
         self._topic = topic
 
     def run(self):
