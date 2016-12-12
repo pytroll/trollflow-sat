@@ -14,8 +14,11 @@ common:
   # Save images in the listed formats.  If "tif" is specified,
   # gdal-python is needed for saving geotiff images.
   formats:
-    - png
-    - tif
+    - format: png
+      # The used writer can be specified, if a custom handling is needed
+      writer: null
+    - format: tif
+      writer: null
 
 # Process areas "eurol" and "euron1" as one group
 # Even for one area, list it as one group!
@@ -41,8 +44,10 @@ product_list:
         # output_dir:
         #   /tmp/
         formats:
-          - png
-          - tif
+          - format: png
+            writer: null
+          - format: tif
+            writer: null
           # - nc
         # NOTE: different pattern, we'll override the global value for
         # this product
@@ -57,8 +62,10 @@ product_list:
         # NOTE! The directory needs to exist
         output_dir: "/tmp/{time:%Y/%m/%d}"
         formats:
-          - png
-          - tif
+          - format: png
+            writer: null
+          - format: tif
+            writer: null
           # - nc
         fname_pattern: "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}"
         
