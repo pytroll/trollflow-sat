@@ -4,6 +4,7 @@ import logging
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 
+
 class CoverageCheck(AbstractWorkflowComponent):
 
     """Check scene coverage"""
@@ -21,8 +22,8 @@ class CoverageCheck(AbstractWorkflowComponent):
         """Invoke"""
         self.logger.info("Checking coverage.")
         scene = context["content"]
-        try:
-area_def = context[""]
+        # try:
+        area_def = context[""]
         try:
             min_coverage = context["min_coverage"]["content"]
         except KeyError:
@@ -36,6 +37,7 @@ area_def = context[""]
     def post_invoke(self):
         """Post-invoke"""
         pass
+
 
 def covers(scene, area_item):
     try:
