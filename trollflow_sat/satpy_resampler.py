@@ -68,13 +68,17 @@ class Resampler(AbstractWorkflowComponent):
                 utils.get_satpy_area_composite_names(product_config, area_name)
             dataset_ids = [ds_id for ds_id in glbl.datasets.keys()
                            if ds_id.name in dataset_names]
-            self.logger.info("Resampling to area %s", area_name)
+            self.logger.info("Resampling time slot %s to area %s",
+                             glbl.info["start_time"], area_name)
             lcl = glbl.resample(area_name, datasets=dataset_ids,
                                 **kwargs)
             lcl.info["product_config"] = product_config
             lcl.info["areaname"] = area_name
             lcl.info["products"] = prod_list[area_name]['products']
             lcl.info["dataset_ids"] = dataset_ids
+            self.logger.debug(
+                "Inserting lcl (area: %s, start_time: %s) to writer's queue",
+                              area_name, str(lcl.info["start_time"]))
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
