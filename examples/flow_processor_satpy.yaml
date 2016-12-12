@@ -1,8 +1,13 @@
 config:
-    - product_list: &product_list
-        /home/lahtinep/Software/pytroll/config_files/flow_processor_satpy_products.yaml
-    - log_config:
-        /home/lahtinep/Software/pytroll/config_files/flow_processor_log_config.ini
+  product_list: &product_list
+    /home/lahtinep/Software/pytroll/config_files/flow_processor_satpy_products.yaml
+  log_config:
+    /home/lahtinep/Software/pytroll/config_files/flow_processor_log_config.ini
+
+  # It is possible to select wether to use multithreaded or serial
+  # processing by setting the following boolean.  If not given,
+  # defaults to "true".
+  use_threading: true
 
 work:
     - type: daemon

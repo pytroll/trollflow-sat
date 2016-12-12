@@ -1,10 +1,14 @@
 # Use this as a config template for trollflow/bin/flow_processor.py
 
 config:
-    product_list: &product_list
-      /tmp/bla.xml
-    log_config:
-      /tmp/log.ini
+  product_list: &product_list
+    /tmp/bla.xml
+  log_config:
+    /tmp/log.ini
+  # It is possible to select wether to use multithreaded or serial
+  # processing by setting the following boolean.  If not given,
+  # defaults to "true".
+  use_threading: true
 work:
     - type: daemon
       name: listener
