@@ -23,7 +23,7 @@ class DataWriterContainer(object):
                  save_settings=None):
         self.topic = topic
         self._input_queue = None
-        self.output_queue = Queue.Queue()
+        self.output_queue = None  # Queue.Queue()
         self.thread = None
 
         # Create a Writer instance
@@ -113,6 +113,7 @@ class DataWriter(Thread):
                 if self.queue is not None:
                     try:
                         lcl = self.queue.get(True, 1)
+                        self.queue.task_done()
                     except Queue.Empty:
                         continue
                     info = lcl.info
@@ -137,10 +138,14 @@ class DataWriter(Thread):
                             else:
                                 self.logger.info(
                                     "Saving %s with default writer", fname)
+
                             lcl.save_dataset(dataset_ids[i],
                                              filename=fname,
                                              writer=writers[j],
                                              **kwargs)
+
+                            self.logger.info("Saved %s", fname)
+
                             area = lcl[prod].info["area"]
                             to_send = {"nominal_time": info[time_name],
                                        "uid": os.path.basename(fname),
@@ -159,7 +164,6 @@ class DataWriter(Thread):
                                 msg = Message(self._topic, "file", to_send)
                                 pub.send(str(msg))
                                 self.logger.debug("Sent message: %s", str(msg))
-                            self.logger.info("Saved %s", fname)
 
                     del lcl
                     lcl = None

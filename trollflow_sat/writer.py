@@ -22,7 +22,7 @@ class DataWriterContainer(object):
                  save_settings=None):
         self.topic = topic
         self._input_queue = None
-        self.output_queue = Queue.Queue()
+        self.output_queue = None  # Queue.Queue()
         self.thread = None
 
         # Create a Writer instance
