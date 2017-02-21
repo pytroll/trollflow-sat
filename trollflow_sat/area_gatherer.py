@@ -10,6 +10,7 @@ from posttroll import message
 
 from trollduction.collectors import region_collector
 
+
 class AreaGathererContainer(object):
 
     """Container for area gatherer."""
@@ -52,6 +53,7 @@ class AreaGathererContainer(object):
         self.thread.join()
         self.logger.debug("AreaGatherer stopped.")
         self.thread = None
+
 
 class AreaGatherer(Thread):
 
@@ -98,7 +100,7 @@ class AreaGatherer(Thread):
             self.collectors[platform] = \
                 [region_collector.RegionCollector(region,
                                                   self._timeliness,
-                                                  self._duration) for \
+                                                  self._duration) for
                  region in self._regions]
 
     @property
@@ -113,8 +115,9 @@ class AreaGatherer(Thread):
                         for collector in self.collectors[platform]
                         if collector.timeout is not None]
             if timeouts:
-                next_timeout = min(timeouts, key=(lambda(x): x[1]))
-                if next_timeout[1] and (next_timeout[1] < dt.datetime.utcnow()):
+                next_timeout = min(timeouts, key=(lambda x: x[1]))
+                if (next_timeout[1] and
+                        (next_timeout[1] < dt.datetime.utcnow())):
                     self.logger.warning("Timeout detected, terminating "
                                         "collector")
                     self.logger.debug("Area: %s, timeout: %s",
@@ -169,7 +172,7 @@ class AreaGatherer(Thread):
             if self.input_queue is not None:
                 # Check timeouts
                 self._check_timeouts()
-                    
+
                 try:
                     # Get new message from the queue
                     msg = self.input_queue.get(True, 1)
@@ -197,6 +200,7 @@ class AreaGatherer(Thread):
         """Stop gatherer."""
         self.logger.info("Stopping AreaGatherer.")
         self._loop = False
+
 
 def total_seconds(tdef):
     """Calculate total time in seconds.
