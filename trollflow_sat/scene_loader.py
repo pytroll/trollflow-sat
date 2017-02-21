@@ -11,7 +11,8 @@ from mpop.satellites import GenericFactory as GF
 
 class SceneLoader(AbstractWorkflowComponent):
 
-    """Creates a scene object from a message and loads the required channels."""
+    """Creates a scene object from a message and loads the required channels.
+    """
 
     logger = logging.getLogger("SceneLoader")
 
