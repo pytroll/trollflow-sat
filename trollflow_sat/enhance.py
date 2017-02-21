@@ -5,6 +5,7 @@ import logging
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 
+
 class Pansharpener(AbstractWorkflowComponent):
 
     """Pansharpen the configured channels"""
@@ -48,6 +49,7 @@ class Pansharpener(AbstractWorkflowComponent):
         """Post-invoke"""
         pass
 
+
 def pansharpen(glbl, pan_chans, overwrite=True):
     """Apply pansharpening"""
     hrv = glbl["HRV"].data
@@ -57,13 +59,14 @@ def pansharpen(glbl, pan_chans, overwrite=True):
     y_rem = hrv_orig_shape[0] % 3
     x_rem = hrv_orig_shape[1] % 3
     if y_rem != 0:
-        hrv = np.vstack((hrv, hrv[-(3-y_rem):, :]))
+        hrv = np.vstack((hrv, hrv[-(3 - y_rem):, :]))
     if x_rem != 0:
-        hrv = np.hstack((hrv, hrv[:, -(3-x_rem):]))
+        hrv = np.hstack((hrv, hrv[:, -(3 - x_rem):]))
 
     shape = hrv.shape
     highresr = np.roll(np.roll(hrv, -1, axis=0), -2, axis=1)
-    lowres = highresr.reshape([shape[0]/3, 3, shape[1]/3, 3]).mean(3).mean(1)
+    lowres = highresr.reshape(
+        [shape[0] / 3, 3, shape[1] / 3, 3]).mean(3).mean(1)
     highres = np.ma.repeat(np.ma.repeat(lowres, 3, axis=0), 3, axis=1)
     ratio = highresr / highres
     # Cut to original HRV shape
@@ -80,9 +83,9 @@ def pansharpen(glbl, pan_chans, overwrite=True):
         y_rem = shape[0] % 3
         x_rem = shape[1] % 3
         if y_rem != 0:
-            chan.data = np.vstack((chan.data, chan.data[-(3-y_rem):, :]))
+            chan.data = np.vstack((chan.data, chan.data[-(3 - y_rem):, :]))
         if x_rem != 0:
-            chan.data = np.hstack((chan.data, chan.data[:, -(3-x_rem):]))
+            chan.data = np.hstack((chan.data, chan.data[:, -(3 - x_rem):]))
 
         # Replicate data
         chan.data = np.ma.repeat(np.ma.repeat(chan.data, 3, axis=0), 3, axis=1)
