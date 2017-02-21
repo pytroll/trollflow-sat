@@ -18,6 +18,7 @@ SLOT_OBSOLETE_TIMEOUT = 3
 
 DO_NOT_COPY_KEYS = ("uid", "uri", "channel_name", "segment")
 
+
 class SegmentGathererContainer(object):
 
     """Container for SegmentGatherer instance"""
@@ -60,6 +61,7 @@ class SegmentGathererContainer(object):
         self.thread.join()
         self.logger.debug("SegmentGatherer stopped.")
         self.thread = None
+
 
 class SegmentGatherer(Thread):
 
@@ -118,7 +120,7 @@ class SegmentGatherer(Thread):
 
         # Critical files that are required, otherwise production will fail.
         # If there are no critical files, empty set([]) is used.
-        #self.slots[time_slot]['critical_files'] = \
+        # self.slots[time_slot]['critical_files'] = \
         self._compose_filenames(time_slot)
 
         self.slots[time_slot]['received_files'] = set([])
@@ -368,11 +370,13 @@ class SegmentGatherer(Thread):
             file_str = ''
             for key in delayed_files:
                 file_str += "%s %f seconds, " % (key, delayed_files[key])
-            self.logger.warning("Files received late: %s", file_str.strip(', '))
+            self.logger.warning("Files received late: %s",
+                                file_str.strip(', '))
 
         if missing_files_check:
             # and missing files
-            missing_files = data['all_files'].difference(data['received_files'])
+            missing_files = \
+                data['all_files'].difference(data['received_files'])
             if len(missing_files) > 0:
                 self.logger.warning("Missing files: %s",
                                     ', '.join(missing_files))
