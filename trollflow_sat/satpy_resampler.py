@@ -33,8 +33,8 @@ class Resampler(AbstractWorkflowComponent):
             kwargs['precompute'] = context["precompute"]["content"]
         except KeyError:
             kwargs['precompute'] = False
-        self.logger.debug(
-            "Setting precompute to %s", str(kwargs['precompute']))
+        self.logger.debug("Setting precompute to %s",
+                          str(kwargs['precompute']))
         try:
             kwargs['nprocs'] = context["nprocs"]["content"]
         except KeyError:
@@ -61,6 +61,11 @@ class Resampler(AbstractWorkflowComponent):
             self.logger.debug("Using search radius %d meters.",
                               int(kwargs['radius_of_influence']))
 
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.logger.debug("Locking is used in resampler: %s",
+                          str(self.use_lock))
+
         prod_list = product_config["product_list"]
         for area_name in prod_list:
             # Reproject only needed channels
@@ -76,12 +81,21 @@ class Resampler(AbstractWorkflowComponent):
             lcl.info["areaname"] = area_name
             lcl.info["products"] = prod_list[area_name]['products']
             lcl.info["dataset_ids"] = dataset_ids
-            self.logger.debug(
-                "Inserting lcl (area: %s, start_time: %s) to writer's queue",
+            self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
+                              "to writer's queue",
                               area_name, str(lcl.info["start_time"]))
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Resampler acquires lock")
+                utils.acquire_lock(context["lock"])
+                self.logger.debug("Resampler lock was released")
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):
         """Post-invoke"""

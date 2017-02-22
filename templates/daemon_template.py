@@ -7,6 +7,9 @@ import Queue
 from threading import Thread
 import time
 
+from trollflow_sat import utils
+
+
 class TemplateContainer(object):
 
     """Thread container for Worker instance"""
@@ -18,9 +21,11 @@ class TemplateContainer(object):
         self._input_queue = None
         self.output_queue = Queue.Queue()
         self.thread = None
+        self._prev_lock = None
 
         # Create a worker instance
-        self.worker = Worker(self.input_queue, self.output_queue)
+        self.worker = Worker(self.input_queue, self.output_queue,
+                             prev_lock=self._prev_lock)
 
         # Start the Worker into a new daemonized thread.
         self.thread = Thread(target=self.worker.run)
@@ -38,6 +43,17 @@ class TemplateContainer(object):
         self._input_queue = queue
         self.worker.input_queue = queue
 
+    @property
+    def prev_lock(self):
+        """Property writer"""
+        return self._prev_lock
+
+    @prev_lock.setter
+    def prev_lock(self, lock):
+        """Set lock of the previous worker"""
+        self._prev_lock = lock
+        self.writer.prev_lock = lock
+
     def __setstate__(self, state):
         self.__init__(**state)
 
@@ -49,17 +65,19 @@ class TemplateContainer(object):
         self.logger.debug("Worker stopped.")
         self.thread = None
 
+
 class Worker(Thread):
 
     """Template for a threaded worker."""
 
     logger = logging.getLogger("Worker")
 
-    def __init__(self, input_queue, output_queue):
+    def __init__(self, input_queue, output_queue, prev_lock=None):
         Thread.__init__(self)
         self.input_queue = input_queue
         self.output_queue = output_queue
         self._loop = False
+        self.prev_lock = prev_lock
 
     def run(self):
         """Run the worker"""
@@ -69,6 +87,9 @@ class Worker(Thread):
                 try:
                     data = self.input_queue.get(True, 1)
                 except Queue.Empty:
+                    # After all the items have been processed, release the
+                    # lock for the previous worker
+                    utils.release_lock(self.prev_lock)
                     continue
                 self.logger.info("New data received.")
                 res = do_stuff(data)
@@ -84,6 +105,7 @@ class Worker(Thread):
     def loop(self):
         """Loop property"""
         return self._loop
+
 
 def do_stuff(data):
     """Do something"""

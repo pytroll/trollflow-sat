@@ -7,6 +7,7 @@ import os.path
 
 from posttroll.publisher import Publish
 from posttroll.message import Message
+from trollflow_sat import utils
 
 
 class DataWriterContainer(object):
@@ -22,12 +23,14 @@ class DataWriterContainer(object):
         self._input_queue = None
         self.output_queue = None  # Queue.Queue()
         self.thread = None
+        self._prev_lock = None
 
         # Create a Writer instance
         self.writer = DataWriter(queue=self.input_queue,
                                  save_settings=save_settings,
                                  topic=topic,
-                                 port=port, nameservers=nameservers)
+                                 port=port, nameservers=nameservers,
+                                 prev_lock=self._prev_lock)
         # Start Writer instance into a new daemonized thread.
         self.thread = Thread(target=self.writer.run)
         self.thread.setDaemon(True)
@@ -43,6 +46,17 @@ class DataWriterContainer(object):
         """Set writer queue"""
         self._input_queue = queue
         self.writer.queue = queue
+
+    @property
+    def prev_lock(self):
+        """Property writer"""
+        return self._prev_lock
+
+    @prev_lock.setter
+    def prev_lock(self, lock):
+        """Set lock of the previous worker"""
+        self._prev_lock = lock
+        self.writer.prev_lock = lock
 
     def __setstate__(self, state):
         self.__init__(**state)
@@ -72,14 +86,20 @@ class DataWriter(Thread):
     logger = logging.getLogger("DataWriter")
 
     def __init__(self, queue=None, save_settings=None,
-                 topic=None, port=0, nameservers=[]):
+                 topic=None, port=0, nameservers=None, prev_lock=None):
         Thread.__init__(self)
         self.queue = queue
         self._loop = False
         self._save_settings = save_settings
         self._port = port
-        self._nameservers = nameservers
+        if nameservers is None:
+            self._nameservers = []
+        else:
+            if type(nameservers) not in (list, tuple, set):
+                nameservers = [nameservers, ]
+            self._nameservers = nameservers
         self._topic = topic
+        self.prev_lock = prev_lock
 
     def run(self):
         """Run the thread."""
@@ -101,6 +121,9 @@ class DataWriter(Thread):
                         obj = self.queue.get(True, 1)
                         self.queue.task_done()
                     except Queue.Empty:
+                        # After all the items have been processed, release the
+                        # lock for the previous worker
+                        utils.release_lock(self.prev_lock)
                         continue
                     for fname in obj.info["fnames"]:
                         self.logger.info("Saving %s", fname)

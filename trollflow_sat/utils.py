@@ -1,5 +1,6 @@
 import os.path
 import logging
+from threading import ThreadError
 
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
@@ -136,3 +137,18 @@ def find_time_name(info):
         if "time" in key and "end" not in key and "proc" not in key:
             return key
     return None
+
+
+def release_lock(lock):
+    """Release the lock of the previous step."""
+    if lock is not None:
+        try:
+            lock.release()
+        except ThreadError:
+            pass
+
+
+def acquire_lock(lock):
+    """Acquire lock and wait for its release"""
+    if lock is not None:
+        lock.acquire(True)

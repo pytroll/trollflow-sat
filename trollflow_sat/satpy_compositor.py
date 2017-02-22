@@ -11,7 +11,8 @@ from satpy import Scene
 
 class SceneLoader(AbstractWorkflowComponent):
 
-    """Creates a scene object from a message and loads the required channels."""
+    """Creates a scene object from a message and loads the required channels.
+    """
 
     logger = logging.getLogger("SceneLoader")
 
@@ -27,6 +28,12 @@ class SceneLoader(AbstractWorkflowComponent):
         with open(context["product_list"]["content"], "r") as fid:
             product_config = yaml.load(fid)
         msg = context['content']
+
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.logger.debug("Locking is used in resampler: %s",
+                          str(self.use_lock))
+
         global_data = self.create_scene_from_message(msg)
         if global_data is None:
             return
@@ -49,8 +56,19 @@ class SceneLoader(AbstractWorkflowComponent):
             global_data.load(composites)
 
             context["output_queue"].put(global_data)
+
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Resampler acquires lock")
+                utils.acquire_lock(context["lock"])
+                self.logger.debug("Resampler lock was released")
+
         del global_data
         global_data = None
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):
         """Post-invoke"""

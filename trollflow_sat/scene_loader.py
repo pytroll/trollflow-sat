@@ -61,14 +61,16 @@ class SceneLoader(AbstractWorkflowComponent):
             context["output_queue"].put(global_data)
             # Set lock if locking is used
             if self.use_lock:
-                self.acquire_lock()
+                self.logger.debug("Scene loader acquires lock")
+                utils.acquire_lock(context["lock"])
+                self.logger.debug("Scene loader lock was released")
 
         del global_data
         global_data = None
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.release_lock()
+        utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):
         """Post-invoke"""

@@ -74,11 +74,13 @@ class Resampler(AbstractWorkflowComponent):
             lcl = None
             # Set lock if locking is used
             if self.use_lock:
-                self.acquire_lock()
+                self.logger.debug("Resampler acquires lock")
+                utils.acquire_lock(context["lock"])
+                self.logger.debug("Resampler lock was released")
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.release_lock()
+        utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):
         """Post-invoke"""

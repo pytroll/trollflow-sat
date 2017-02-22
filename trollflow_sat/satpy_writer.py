@@ -3,12 +3,10 @@ import Queue
 from threading import Thread
 import logging
 import time
-from urlparse import urlunsplit
 import os.path
 
 from posttroll.publisher import Publish
 from posttroll.message import Message
-from trollsift import compose
 from trollflow_sat import utils
 
 
@@ -25,12 +23,15 @@ class DataWriterContainer(object):
         self._input_queue = None
         self.output_queue = None  # Queue.Queue()
         self.thread = None
+        self._prev_lock = None
 
         # Create a Writer instance
         self.writer = DataWriter(queue=self.input_queue,
                                  save_settings=save_settings,
                                  topic=topic,
-                                 port=port, nameservers=nameservers)
+                                 port=port,
+                                 nameservers=nameservers,
+                                 prev_lock=self._prev_lock)
         # Start Writer instance into a new daemonized thread.
         self.thread = Thread(target=self.writer.run)
         self.thread.setDaemon(True)
@@ -46,6 +47,17 @@ class DataWriterContainer(object):
         """Set writer queue"""
         self._input_queue = queue
         self.writer.queue = queue
+
+        @property
+        def prev_lock(self):
+            """Property writer"""
+            return self._prev_lock
+
+        @prev_lock.setter
+        def prev_lock(self, lock):
+            """Set lock of the previous worker"""
+            self._prev_lock = lock
+            self.writer.prev_lock = lock
 
     def __setstate__(self, state):
         self.__init__(**state)
@@ -75,7 +87,7 @@ class DataWriter(Thread):
     logger = logging.getLogger("DataWriter")
 
     def __init__(self, queue=None, save_settings=None,
-                 topic=None, port=0, nameservers=None):
+                 topic=None, port=0, nameservers=None, prev_lock=None):
         Thread.__init__(self)
         self.queue = queue
         self._loop = False
@@ -115,6 +127,9 @@ class DataWriter(Thread):
                         lcl = self.queue.get(True, 1)
                         self.queue.task_done()
                     except Queue.Empty:
+                        # After all the items have been processed, release the
+                        # lock for the previous worker
+                        utils.release_lock(self.prev_lock)
                         continue
                     info = lcl.info
                     time_name = utils.find_time_name(info)
