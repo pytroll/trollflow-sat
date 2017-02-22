@@ -23,13 +23,13 @@ class Pansharpener(AbstractWorkflowComponent):
         """Invoke"""
         glbl = context["content"]
         # Read list of channels to be sharpened
-        pan_chans = context["pan_sharpen_chans"]["content"]
+        pan_chans = context["pan_sharpen_chans"]
         self.logger.info("Applying pansharpening to channels: %s",
                          str(pan_chans))
         # Check if the original data should be overwritten (default)
         # or create a new channel named "pan_"+chan.name
         try:
-            overwrite = context["overwrite"]["content"]
+            overwrite = context["overwrite"]
         except KeyError:
             overwrite = True
 

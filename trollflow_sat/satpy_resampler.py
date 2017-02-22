@@ -24,24 +24,24 @@ class Resampler(AbstractWorkflowComponent):
     def invoke(self, context):
         """Invoke"""
         glbl = context["content"]
-        with open(context["product_list"]["content"], "r") as fid:
+        with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
 
         # Handle config options
         kwargs = {}
         try:
-            kwargs['precompute'] = context["precompute"]["content"]
+            kwargs['precompute'] = context["precompute"]
         except KeyError:
             kwargs['precompute'] = False
         self.logger.debug("Setting precompute to %s",
                           str(kwargs['precompute']))
         try:
-            kwargs['nprocs'] = context["nprocs"]["content"]
+            kwargs['nprocs'] = context["nprocs"]
         except KeyError:
             kwargs['nprocs'] = 1
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
         try:
-            kwargs['resampler'] = context["proj_method"]["content"]
+            kwargs['resampler'] = context["proj_method"]
         except KeyError:
             kwargs['resampler'] = "nearest"
         self.logger.debug(
@@ -50,7 +50,7 @@ class Resampler(AbstractWorkflowComponent):
             area = glbl.area.area_id
             area_config = product_config["product_list"][area]
             kwargs['radius_of_influence'] = \
-                area_config.get("srch_radius", context["radius"]["content"],
+                area_config.get("srch_radius", context["radius"]
                                 10000.)
         except (AttributeError, KeyError):
             kwargs['radius_of_influence'] = 10000.
@@ -62,7 +62,7 @@ class Resampler(AbstractWorkflowComponent):
                               int(kwargs['radius_of_influence']))
 
         # Set locking status, default to False
-        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in resampler: %s",
                           str(self.use_lock))
 

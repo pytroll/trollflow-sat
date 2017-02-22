@@ -25,10 +25,10 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        with open(context["product_list"]["content"], "r") as fid:
+        with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
         # Set locking status, default to False
-        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in scene loader: %s",
                           str(self.use_lock))
 

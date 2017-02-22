@@ -23,27 +23,27 @@ class Resampler(AbstractWorkflowComponent):
     def invoke(self, context):
         """Invoke"""
         glbl = context["content"]
-        with open(context["product_list"]["content"], "r") as fid:
+        with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
 
         # Handle config options
         try:
-            precompute = context["precompute"]["content"]
+            precompute = context["precompute"]
             self.logger.debug("Setting precompute to %s", str(precompute))
         except KeyError:
             precompute = False
         try:
-            nprocs = context["nprocs"]["content"]
+            nprocs = context["nprocs"]
             self.logger.debug("Using %d CPUs for resampling.", nprocs)
         except KeyError:
             nprocs = 1
         try:
-            proj_method = context["proj_method"]["content"]
+            proj_method = context["proj_method"]
             self.logger.debug("Using resampling method: '%s'.", proj_method)
         except KeyError:
             proj_method = "nearest"
         try:
-            radius = context["radius"]["content"]
+            radius = context["radius"]
         except (AttributeError, KeyError):
             radius = None
 
@@ -53,7 +53,7 @@ class Resampler(AbstractWorkflowComponent):
             self.logger.debug("Using search radius %d meters.", int(radius))
 
         # Set locking status, default to False
-        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in resampler: %s",
                           str(self.use_lock))
 
