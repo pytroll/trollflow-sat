@@ -5,10 +5,15 @@ config:
     /tmp/bla.xml
   log_config:
     /tmp/log.ini
-  # It is possible to select wether to use multithreaded or serial
-  # processing by setting the following boolean.  If not given,
-  # defaults to "true".
-  use_threading: true
+  # It is possible to lock each worker to reduce simultaneous CPU load and
+  # memory usage.  Each step that has *use_lock* set as true will wait until
+  # the next worker has completed the previous task.  This is a global value
+  # that is used below.  The individual values can be set as seen fit for
+  # the planned use. NOTE: dameon workers do not have locks, but will release
+  # locking for the previous Workflow worker.
+  use_locks: &use_locks
+    true
+
 work:
     - type: daemon
       name: listener
@@ -27,6 +32,7 @@ work:
       Workflow:
         - trollflow_sat.scene_loader.SceneLoader:
             product_list: *product_list
+            use_lock: *use_locks
     - type: workflow
       name: pansharpener
       Workflow:
@@ -40,6 +46,7 @@ work:
             # as a new channel named "pan_"+chan.name. Default is to
             # overwrite.
             overwrite: False
+            use_lock: *use_locks
     - type: workflow
       name: resampler
       Workflow:
@@ -50,11 +57,13 @@ work:
             nprocs: 1
             proj_method: nearest
             product_list: *product_list
+            use_lock: *use_locks
     - type: workflow
       name: compositor
       Workflow:
         - trollflow_sat.compositor.CompositeGenerator:
             product_list: *product_list
+            use_lock: *use_locks
     - type: daemon
       name: writer
       components:
@@ -71,11 +80,6 @@ work:
               gdal_options: null
               # Use "null" instead of "None"
               fformat: null
-              blocksize: 256
-
-#    - type: daemon
-#      name: writer
-#      components:
-#        - class: trollflow.writers.write
-#        - class: trollflow.publish
-#          topic: /kool/finished
+              # NOTE: blocksize needs to be 0 if GeoTIFF images area read
+              # using Pillow
+              blocksize: 0
