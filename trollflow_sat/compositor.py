@@ -5,7 +5,6 @@ import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from trollsift import compose
 
 
 class CompositeGenerator(AbstractWorkflowComponent):
@@ -26,6 +25,12 @@ class CompositeGenerator(AbstractWorkflowComponent):
         data = context["content"]
         with open(context["product_list"]["content"], "r") as fid:
             product_config = yaml.load(fid)
+
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.logger.debug("Locking is used in compositor: %s",
+                          str(self.use_lock))
+
         for prod in data.info["products"]:
             self.logger.info("Creating composite %s", prod)
             try:
@@ -52,6 +57,14 @@ class CompositeGenerator(AbstractWorkflowComponent):
                 context["output_queue"].put(img)
             del img
             img = None
+
+            # Set lock if locking is used
+            if self.use_lock:
+                self.acquire_lock()
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        self.release_lock()
 
     def post_invoke(self):
         """Post-invoke"""

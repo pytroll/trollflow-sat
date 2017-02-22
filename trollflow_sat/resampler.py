@@ -43,10 +43,7 @@ class Resampler(AbstractWorkflowComponent):
         except KeyError:
             proj_method = "nearest"
         try:
-            area = glbl.area.area_id
-            area_config = product_config["product_list"][area]
-            radius = area_config.get("srch_radius",
-                                     context["radius"]["content"])
+            radius = context["radius"]["content"]
         except (AttributeError, KeyError):
             radius = None
 
@@ -54,6 +51,11 @@ class Resampler(AbstractWorkflowComponent):
             self.logger.debug("Using default search radius.")
         else:
             self.logger.debug("Using search radius %d meters.", int(radius))
+
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.logger.debug("Locking is used in resampler: %s",
+                          str(self.use_lock))
 
         prod_list = product_config["product_list"]
         for area_name in prod_list:
@@ -70,6 +72,13 @@ class Resampler(AbstractWorkflowComponent):
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
+            # Set lock if locking is used
+            if self.use_lock:
+                self.acquire_lock()
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        self.release_lock()
 
     def post_invoke(self):
         """Post-invoke"""

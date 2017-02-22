@@ -27,7 +27,14 @@ class SceneLoader(AbstractWorkflowComponent):
         """Invoke"""
         with open(context["product_list"]["content"], "r") as fid:
             product_config = yaml.load(fid)
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", {'content': False})['content']
+        self.logger.debug("Locking is used in scene loader: %s",
+                          str(self.use_lock))
+
+        # Read message
         msg = context['content']
+
         global_data = self.create_scene_from_message(msg)
         if global_data is None:
             return
@@ -52,8 +59,16 @@ class SceneLoader(AbstractWorkflowComponent):
                              use_extern_calib=use_extern_calib)
 
             context["output_queue"].put(global_data)
+            # Set lock if locking is used
+            if self.use_lock:
+                self.acquire_lock()
+
         del global_data
         global_data = None
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        self.release_lock()
 
     def post_invoke(self):
         """Post-invoke"""
