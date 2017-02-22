@@ -3,12 +3,10 @@ import Queue
 from threading import Thread
 import logging
 import time
-from urlparse import urlunsplit
 import os.path
 
 from posttroll.publisher import Publish
 from posttroll.message import Message
-from trollsift import compose
 
 
 class DataWriterContainer(object):
@@ -101,6 +99,7 @@ class DataWriter(Thread):
                 if self.queue is not None:
                     try:
                         obj = self.queue.get(True, 1)
+                        self.queue.task_done()
                     except Queue.Empty:
                         continue
                     for fname in obj.info["fnames"]:
