@@ -52,4 +52,6 @@ work:
               # Use "null" instead of "None"
               fformat: null
               blocksize: 0
-              # 256
+            # By default writer doesn't lock the compositor, but that
+            # can be done by setting use_lock to true
+            # use_lock: true
