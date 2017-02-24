@@ -2,6 +2,7 @@
 
 import logging
 import yaml
+import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
@@ -22,16 +23,28 @@ class CompositeGenerator(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        data = context["content"]
-        with open(context["product_list"], "r") as fid:
-            product_config = yaml.load(fid)
+        self.logger.debug("Compositor acquires lock of previous worker: %s",
+                          str(context["prev_lock"]))
+        utils.acquire_lock(context["prev_lock"])
 
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in compositor: %s",
                           str(self.use_lock))
+        if not self.use_lock:
+            utils.release_lock(context["prev_lock"])
+
+        data = context["content"]
+        with open(context["product_list"], "r") as fid:
+            product_config = yaml.load(fid)
 
         for prod in data.info["products"]:
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Compositor acquires own lock %s",
+                                  str(context["lock"]))
+                utils.acquire_lock(context["lock"])
+
             self.logger.info("Creating composite %s", prod)
             try:
                 func = getattr(data.image, prod)
@@ -44,7 +57,6 @@ class CompositeGenerator(AbstractWorkflowComponent):
                 continue
 
             # Get filename and product name from product config
-            data.info["areaname"] = data.area.area_id
             fnames, productname = utils.create_fnames(
                 data.info, product_config, prod)
 
@@ -58,14 +70,18 @@ class CompositeGenerator(AbstractWorkflowComponent):
             del img
             img = None
 
-            # Set lock if locking is used
             if self.use_lock:
-                self.logger.debug("Compositor acquires lock")
-                utils.acquire_lock(context["lock"])
-                self.logger.debug("Compositor lock was released")
+                self.logger.debug("Compositor releases own lock %s",
+                                  str(context["lock"]))
+                utils.release_lock(context["lock"])
+                # Wait 1 second to ensure next worker has time to acquire the
+                # lock
+                time.sleep(1)
 
         # After all the items have been processed, release the lock for
         # the previous step
+        self.logger.debug("Compositor releses lock of previous worker: %s",
+                          str(context["prev_lock"]))
         utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):

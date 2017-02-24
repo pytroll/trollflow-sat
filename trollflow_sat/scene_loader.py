@@ -3,6 +3,7 @@
 
 import logging
 import yaml
+import time
 
 from trollflow_sat import utils
 from trollflow.workflow_component import AbstractWorkflowComponent
@@ -25,12 +26,19 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        with open(context["product_list"], "r") as fid:
-            product_config = yaml.load(fid)
+        self.logger.debug("Scene loader acquires lock of previous worker: %s",
+                          str(context["prev_lock"]))
+        utils.acquire_lock(context["prev_lock"])
+
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
-        self.logger.debug("Locking is used in scene loader: %s",
+        self.logger.debug("Locking is used in compositor: %s",
                           str(self.use_lock))
+        if not self.use_lock:
+            utils.release_lock(context["prev_lock"])
+
+        with open(context["product_list"], "r") as fid:
+            product_config = yaml.load(fid)
 
         # Read message
         msg = context['content']
@@ -43,33 +51,48 @@ class SceneLoader(AbstractWorkflowComponent):
                                                         "False")
 
         for group in product_config["groups"]:
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Scene loader acquires own lock %s",
+                                  str(context["lock"]))
+                utils.acquire_lock(context["lock"])
             grp_area_def_names = product_config["groups"][group]
+
+            self.logger.debug("Loading data for group %s with areas %s",
+                              group, str(grp_area_def_names))
+
             reqs = utils.get_prerequisites_yaml(global_data,
                                                 product_config["product_list"],
                                                 grp_area_def_names)
-            prev_reqs = {itm.name for itm in global_data.loaded_channels()}
-            reqs_to_unload = prev_reqs - reqs
-            if len(reqs_to_unload) > 0:
-                self.logger.debug("Unloading unnecessary channels: %s",
-                                  str(sorted(reqs_to_unload)))
-                global_data.unload(reqs_to_unload)
+
             self.logger.info("Loading required channels for this group: %s",
                              str(sorted(reqs)))
-            global_data.load(reqs, area_def_names=grp_area_def_names,
-                             use_extern_calib=use_extern_calib)
 
+            if "satproj" in grp_area_def_names:
+                global_data.load(reqs, load_again=True,
+                                 use_extern_calib=use_extern_calib)
+            else:
+                global_data.load(reqs, load_again=True,
+                                 area_def_names=grp_area_def_names,
+                                 use_extern_calib=use_extern_calib)
+
+            global_data.info["areas"] = grp_area_def_names
             context["output_queue"].put(global_data)
-            # Set lock if locking is used
+
             if self.use_lock:
-                self.logger.debug("Scene loader acquires lock")
-                utils.acquire_lock(context["lock"])
-                self.logger.debug("Scene loader lock was released")
+                self.logger.debug("Scene loader releases own lock %s",
+                                  str(context["lock"]))
+                utils.release_lock(context["lock"])
+                # Wait 1 second to ensure next worker has time to acquire the
+                # lock
+                time.sleep(1)
 
         del global_data
         global_data = None
 
         # After all the items have been processed, release the lock for
         # the previous step
+        self.logger.debug("Scene loader releses lock of previous worker")
         utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):

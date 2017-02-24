@@ -26,10 +26,13 @@ def get_prerequisites_yaml(global_data, prod_list, area_list):
 
 def create_fnames(info, product_config, prod_id):
     """Create filename for product *prod*"""
-    area_name = info["areaname"]
+    area_id = info["area_id"]
 
     # List of products
-    products = product_config["product_list"][area_name]["products"]
+    products = product_config["product_list"][area_id]["products"]
+
+    # Get area name
+    info["areaname"] = product_config["product_list"][area_id]["areaname"]
 
     # Find output directory
     output_dir = products[prod_id].get("output_dir", "")
@@ -100,9 +103,9 @@ def create_fnames(info, product_config, prod_id):
     return (fnames, prod_name)
 
 
-def get_writer_names(product_config, prod_id, area_name):
+def get_writer_names(product_config, prod_id, area_id):
     """Get writer names for the """
-    products = product_config["product_list"][area_name]["products"]
+    products = product_config["product_list"][area_id]["products"]
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
         formats = product_config["common"].get("formats", [{"format": FORMAT,
@@ -124,11 +127,11 @@ def get_satpy_group_composite_names(product_config, group):
     return composites
 
 
-def get_satpy_area_composite_names(product_config, area_name):
+def get_satpy_area_composite_names(product_config, area_id):
     """Parse composite names from the product config for the given
     group."""
     prod_list = product_config['product_list']
-    return prod_list[area_name]['products'].keys()
+    return prod_list[area_id]['products'].keys()
 
 
 def find_time_name(info):
@@ -143,8 +146,10 @@ def release_lock(lock):
     """Release the lock of the previous step."""
     if lock is not None:
         try:
-            lock.release()
-        except ThreadError:
+            while lock._RLock__count > 0:
+                lock.release()
+            LOGGER.debug("Released lock %s", str(lock))
+        except (ThreadError, RuntimeError):
             pass
 
 
@@ -152,3 +157,4 @@ def acquire_lock(lock):
     """Acquire lock and wait for its release"""
     if lock is not None:
         lock.acquire(True)
+        LOGGER.debug("Acquired lock %s", str(lock))

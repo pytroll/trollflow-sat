@@ -3,6 +3,7 @@ using satpy"""
 
 import logging
 import yaml
+import time
 
 from trollflow_sat import utils
 from trollflow.workflow_component import AbstractWorkflowComponent
@@ -25,14 +26,21 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        with open(context["product_list"], "r") as fid:
-            product_config = yaml.load(fid)
-        msg = context['content']
+        # Handle locking first
+        self.logger.debug("Compositor acquires lock of previous worker: %s",
+                          str(context["prev_lock"]))
+        utils.acquire_lock(context["prev_lock"])
 
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in resampler: %s",
                           str(self.use_lock))
+        if not self.use_lock:
+            utils.release_lock(context["prev_lock"])
+
+        with open(context["product_list"], "r") as fid:
+            product_config = yaml.load(fid)
+        msg = context['content']
 
         global_data = self.create_scene_from_message(msg)
         if global_data is None:
@@ -42,6 +50,12 @@ class SceneLoader(AbstractWorkflowComponent):
         #                                                 "False")
 
         for group in product_config["groups"]:
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Compositor acquires own lock %s",
+                                  str(context["lock"]))
+                utils.acquire_lock(context["lock"])
+
             composites = utils.get_satpy_group_composite_names(product_config,
                                                                group)
             prev_reqs = {itm.name for itm in global_data.datasets}
@@ -57,17 +71,21 @@ class SceneLoader(AbstractWorkflowComponent):
 
             context["output_queue"].put(global_data)
 
-            # Set lock if locking is used
             if self.use_lock:
-                self.logger.debug("Resampler acquires lock")
-                utils.acquire_lock(context["lock"])
-                self.logger.debug("Resampler lock was released")
+                self.logger.debug("Compositor releases own lock %s",
+                                  str(context["lock"]))
+                utils.release_lock(context["lock"])
+                # Wait 1 second to ensure next worker has time to acquire the
+                # lock
+                time.sleep(1)
 
         del global_data
         global_data = None
 
         # After all the items have been processed, release the lock for
         # the previous step
+        self.logger.debug("Compositor releses lock of previous worker: %s",
+                          str(context["prev_lock"]))
         utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):

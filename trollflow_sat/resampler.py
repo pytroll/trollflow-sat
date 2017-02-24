@@ -2,6 +2,7 @@
 
 import logging
 import yaml
+import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
@@ -22,6 +23,17 @@ class Resampler(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
+        self.logger.debug("Resampler acquires lock of previous worker: %s",
+                          str(context["prev_lock"]))
+        utils.acquire_lock(context["prev_lock"])
+
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", False)
+        self.logger.debug("Locking is used in compositor: %s",
+                          str(self.use_lock))
+        if not self.use_lock:
+            utils.release_lock(context["prev_lock"])
+
         glbl = context["content"]
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
@@ -52,34 +64,46 @@ class Resampler(AbstractWorkflowComponent):
         else:
             self.logger.debug("Using search radius %d meters.", int(radius))
 
-        # Set locking status, default to False
-        self.use_lock = context.get("use_lock", False)
-        self.logger.debug("Locking is used in resampler: %s",
-                          str(self.use_lock))
-
         prod_list = product_config["product_list"]
-        for area_name in prod_list:
+        for area_id in prod_list:
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Resampler acquires own lock %s",
+                                  str(context["lock"]))
+                utils.acquire_lock(context["lock"])
+            if area_id not in glbl.info["areas"]:
+                continue
+
             # Reproject only needed channels
             channels = utils.get_prerequisites_yaml(glbl,
                                                     prod_list,
-                                                    [area_name, ])
-            self.logger.info("Resampling to area %s", area_name)
-            lcl = glbl.project(area_name, channels=channels,
-                               precompute=precompute,
-                               mode=proj_method, radius=radius, nprocs=nprocs)
-            lcl.info["areaname"] = area_name
-            lcl.info["products"] = prod_list[area_name]['products']
+                                                    [area_id, ])
+            if area_id == "satproj":
+                self.logger.info("Using satellite projection")
+                lcl = glbl
+            else:
+                self.logger.info("Resampling to area %s", area_id)
+                lcl = glbl.project(area_id, channels=channels,
+                                   precompute=precompute,
+                                   mode=proj_method, radius=radius,
+                                   nprocs=nprocs)
+            lcl.info["area_id"] = area_id
+            lcl.info["products"] = prod_list[area_id]['products']
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
-            # Set lock if locking is used
             if self.use_lock:
-                self.logger.debug("Resampler acquires lock")
-                utils.acquire_lock(context["lock"])
-                self.logger.debug("Resampler lock was released")
+                self.logger.debug("Resampler releases own lock %s",
+                                  str(context["lock"]))
+                utils.release_lock(context["lock"])
+                # Wait 1 second to ensure next worker has time to acquire the
+                # lock
+                time.sleep(1)
 
         # After all the items have been processed, release the lock for
         # the previous step
+        self.logger.debug("Resampler releses lock of previous worker: %s",
+                          str(context["prev_lock"]))
         utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):

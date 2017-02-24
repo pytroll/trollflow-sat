@@ -17,13 +17,18 @@ class DataWriterContainer(object):
 
     logger = logging.getLogger("DataWriterContainer")
 
-    def __init__(self, topic=None, port=0, nameservers=[],
+    def __init__(self, topic=None, port=0, nameservers=None,
                  save_settings=None):
         self.topic = topic
         self._input_queue = None
         self.output_queue = None  # Queue.Queue()
         self.thread = None
         self._prev_lock = None
+        if nameservers is None:
+            nameservers = []
+        else:
+            if type(nameservers) not in (list, tuple, set):
+                nameservers = [nameservers, ]
 
         # Create a Writer instance
         self.writer = DataWriter(queue=self.input_queue,
@@ -119,27 +124,34 @@ class DataWriter(Thread):
                 if self.queue is not None:
                     try:
                         obj = self.queue.get(True, 1)
+                        self.logger.debug("Writer acquires lock of "
+                                          "previous worker: %s",
+                                          str(self.prev_lock))
+                        utils.acquire_lock(self.prev_lock)
                         self.queue.task_done()
                     except Queue.Empty:
-                        # After all the items have been processed, release the
-                        # lock for the previous worker
-                        utils.release_lock(self.prev_lock)
                         continue
                     for fname in obj.info["fnames"]:
                         self.logger.info("Saving %s", fname)
                         obj.save(fname, compression=compression, tags=tags,
                                  fformat=fformat, gdal_options=gdal_options,
                                  blocksize=blocksize)
+
                         area = getattr(obj, "area")
+                        try:
+                            area_data = {"name": area.name,
+                                         "area_id": area.area_id,
+                                         "proj_id": area.proj_id,
+                                         "proj4": area.proj4_string,
+                                         "shape": (area.x_size, area.y_size)
+                                         }
+                        except AttributeError:
+                            area_data = None
+
                         to_send = {"nominal_time": getattr(obj, "time_slot"),
                                    "uid": os.path.basename(fname),
                                    "uri": os.path.abspath(fname),
-                                   "area": {"name": area.name,
-                                            "area_id": area.area_id,
-                                            "proj_id": area.proj_id,
-                                            "proj4": area.proj4_string,
-                                            "shape": (area.x_size, area.y_size)
-                                            },
+                                   "area": area_data,
                                    "productname": obj.info["productname"]
                                    }
                         # if self._topic is not None:
@@ -151,6 +163,12 @@ class DataWriter(Thread):
 
                     del obj
                     obj = None
+                    # After all the items have been processed, release the
+                    # lock for the previous worker
+                    self.logger.debug("Writer releses lock of "
+                                      "previous worker: %s",
+                                      str(self.prev_lock))
+                    utils.release_lock(self.prev_lock)
                 else:
                     time.sleep(1)
 

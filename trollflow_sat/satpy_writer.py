@@ -17,7 +17,7 @@ class DataWriterContainer(object):
 
     logger = logging.getLogger("DataWriterContainer")
 
-    def __init__(self, topic=None, port=0, nameservers=[],
+    def __init__(self, topic=None, port=0, nameservers=None,
                  save_settings=None):
         self.topic = topic
         self._input_queue = None
@@ -100,6 +100,7 @@ class DataWriter(Thread):
                 nameservers = [nameservers, ]
             self._nameservers = nameservers
         self._topic = topic
+        self.prev_lock = prev_lock
 
     def run(self):
         """Run the thread."""
@@ -125,13 +126,16 @@ class DataWriter(Thread):
                 if self.queue is not None:
                     try:
                         lcl = self.queue.get(True, 1)
+                        self.logger.debug("Writer acquires lock of "
+                                          "previous worker: %s",
+                                          str(self.prev_lock))
+                        utils.acquire_lock(self.prev_lock)
                         self.queue.task_done()
                     except Queue.Empty:
                         # After all the items have been processed, release the
                         # lock for the previous worker
-                        utils.release_lock(self.prev_lock)
                         continue
-                    info = lcl.info
+                    info = lcl.info.copy()
                     time_name = utils.find_time_name(info)
                     product_config = lcl.info["product_config"]
                     products = lcl.info["products"]
@@ -144,8 +148,8 @@ class DataWriter(Thread):
                         # Some of the files might have specific
                         # writers, use them if configured
                         writers = utils.get_writer_names(product_config, prod,
-                                                         info["areaname"])
-                        # product_config, prod_id, area_name
+                                                         info["area_id"])
+
                         for j, fname in enumerate(fnames):
                             if writers[j]:
                                 self.logger.info("Saving %s with writer %s",
@@ -182,6 +186,12 @@ class DataWriter(Thread):
 
                     del lcl
                     lcl = None
+                    # After all the items have been processed, release the
+                    # lock for the previous worker
+                    self.logger.debug("Writer releses lock of "
+                                      "previous worker: %s",
+                                      str(self.prev_lock))
+                    utils.release_lock(self.prev_lock)
                 else:
                     time.sleep(1)
 

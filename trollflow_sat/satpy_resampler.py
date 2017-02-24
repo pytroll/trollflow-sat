@@ -3,6 +3,7 @@ Trollduction using satpy"""
 
 import logging
 import yaml
+import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
@@ -23,6 +24,17 @@ class Resampler(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
+        self.logger.debug("Compositor acquires lock of previous worker: %s",
+                          str(context["prev_lock"]))
+        utils.acquire_lock(context["prev_lock"])
+
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", False)
+        self.logger.debug("Locking is used in resampler: %s",
+                          str(self.use_lock))
+        if not self.use_lock:
+            utils.release_lock(context["prev_lock"])
+
         glbl = context["content"]
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
@@ -50,7 +62,7 @@ class Resampler(AbstractWorkflowComponent):
             area = glbl.area.area_id
             area_config = product_config["product_list"][area]
             kwargs['radius_of_influence'] = \
-                area_config.get("srch_radius", context["radius"]
+                area_config.get("srch_radius", context["radius"],
                                 10000.)
         except (AttributeError, KeyError):
             kwargs['radius_of_influence'] = 10000.
@@ -67,34 +79,51 @@ class Resampler(AbstractWorkflowComponent):
                           str(self.use_lock))
 
         prod_list = product_config["product_list"]
-        for area_name in prod_list:
+        for area_id in prod_list:
+            # Set lock if locking is used
+            if self.use_lock:
+                self.logger.debug("Resampler acquires own lock %s",
+                                  str(context["lock"]))
+                utils.acquire_lock(context["lock"])
+            if area_id not in glbl.info["areas"]:
+                continue
+
             # Reproject only needed channels
             dataset_names = \
-                utils.get_satpy_area_composite_names(product_config, area_name)
+                utils.get_satpy_area_composite_names(product_config, area_id)
             dataset_ids = [ds_id for ds_id in glbl.datasets.keys()
                            if ds_id.name in dataset_names]
-            self.logger.info("Resampling time slot %s to area %s",
-                             glbl.info["start_time"], area_name)
-            lcl = glbl.resample(area_name, datasets=dataset_ids,
-                                **kwargs)
+            if area_id == "satproj":
+                self.logger.info("Using satellite projection")
+                lcl = glbl
+            else:
+                self.logger.info("Resampling time slot %s to area %s",
+                                 glbl.info["start_time"], area_id)
+                lcl = glbl.resample(area_id, datasets=dataset_ids,
+                                    **kwargs)
             lcl.info["product_config"] = product_config
-            lcl.info["areaname"] = area_name
-            lcl.info["products"] = prod_list[area_name]['products']
+            lcl.info["area_id"] = area_id
+            lcl.info["products"] = prod_list[area_id]['products']
             lcl.info["dataset_ids"] = dataset_ids
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
-                              area_name, str(lcl.info["start_time"]))
+                              area_id, str(lcl.info["start_time"]))
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
-            # Set lock if locking is used
+
             if self.use_lock:
-                self.logger.debug("Resampler acquires lock")
-                utils.acquire_lock(context["lock"])
-                self.logger.debug("Resampler lock was released")
+                self.logger.debug("Resampler releases own lock %s",
+                                  str(context["lock"]))
+                utils.release_lock(context["lock"])
+                # Wait 1 second to ensure next worker has time to acquire the
+                # lock
+                time.sleep(1)
 
         # After all the items have been processed, release the lock for
         # the previous step
+        self.logger.debug("Resampler releses lock of previous worker: %s",
+                          str(context["prev_lock"]))
         utils.release_lock(context["prev_lock"])
 
     def post_invoke(self):
