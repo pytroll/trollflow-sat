@@ -77,6 +77,11 @@ class CompositeGenerator(AbstractWorkflowComponent):
                 # lock
                 time.sleep(1)
 
+        # Wait until the lock has been released downstream
+        if self.use_lock:
+            acquire_lock(context["lock"])
+            release_lock(context["lock"])
+
         # After all the items have been processed, release the lock for
         # the previous step
         self.logger.debug("Compositor releses lock of previous worker: %s",

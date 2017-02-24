@@ -43,6 +43,16 @@ class TemplateClass(AbstractWorkflowComponent):
             # lock
             time.sleep(1)
 
+        # Wait until the lock has been released downstream
+        if self.use_lock:
+            acquire_lock(context["lock"])
+            release_lock(context["lock"])
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        self.logger.debug("Scene loader releses lock of previous worker")
+        release_lock(context["prev_lock"])
+
     def post_invoke(self):
         """Post-invoke"""
         pass
