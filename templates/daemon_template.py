@@ -16,12 +16,13 @@ class TemplateContainer(object):
 
     logger = logging.getLogger("TemplateContainer")
 
-    def __init__(self):
+    def __init__(self, use_lock=False):
         self.worker = None
         self._input_queue = None
         self.output_queue = Queue.Queue()
         self.thread = None
         self._prev_lock = None
+        self.use_lock = use_lock
 
         # Create a worker instance
         self.worker = Worker(self.input_queue, self.output_queue,
@@ -51,8 +52,9 @@ class TemplateContainer(object):
     @prev_lock.setter
     def prev_lock(self, lock):
         """Set lock of the previous worker"""
-        self._prev_lock = lock
-        self.writer.prev_lock = lock
+        if self.use_lock:
+            self._prev_lock = lock
+            self.writer.prev_lock = lock
 
     def __setstate__(self, state):
         self.__init__(**state)
@@ -86,10 +88,11 @@ class Worker(Thread):
             if self.input_queue is not None:
                 try:
                     data = self.input_queue.get(True, 1)
-                    self.logger.debug("TemplateDaemon acquires lock of "
-                                      "previous worker: %s",
-                                      str(self.prev_lock))
-                    acquire_lock(self.prev_lock)
+                    if self.prev_lock is not None:
+                        self.logger.debug("TemplateDaemon acquires lock of "
+                                          "previous worker: %s",
+                                          str(self.prev_lock))
+                        acquire_lock(self.prev_lock)
                     self.queue.task_done()
                 except Queue.Empty:
                     continue
@@ -98,10 +101,11 @@ class Worker(Thread):
                 self.output_queue.put(res)
                 # After all the items have been processed, release the
                 # lock for the previous worker
-                self.logger.debug("Writer releses lock of "
-                                  "previous worker: %s",
-                                  str(self.prev_lock))
-                release_lock(self.prev_lock)
+                if self.prev_lock is not None:
+                    self.logger.debug("Writer releses lock of "
+                                      "previous worker: %s",
+                                      str(self.prev_lock))
+                    release_lock(self.prev_lock)
             else:
                 time.sleep(1)
 

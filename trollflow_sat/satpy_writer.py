@@ -19,12 +19,13 @@ class DataWriterContainer(object):
     logger = logging.getLogger("DataWriterContainer")
 
     def __init__(self, topic=None, port=0, nameservers=None,
-                 save_settings=None):
+                 save_settings=None, use_lock=False):
         self.topic = topic
         self._input_queue = None
         self.output_queue = None  # Queue.Queue()
         self.thread = None
         self._prev_lock = None
+        self.use_lock = use_lock
 
         # Create a Writer instance
         self.writer = DataWriter(queue=self.input_queue,
@@ -49,14 +50,15 @@ class DataWriterContainer(object):
         self._input_queue = queue
         self.writer.queue = queue
 
-        @property
-        def prev_lock(self):
-            """Property writer"""
-            return self._prev_lock
+    @property
+    def prev_lock(self):
+        """Property writer"""
+        return self._prev_lock
 
-        @prev_lock.setter
-        def prev_lock(self, lock):
-            """Set lock of the previous worker"""
+    @prev_lock.setter
+    def prev_lock(self, lock):
+        """Set lock of the previous worker"""
+        if self.use_lock:
             self._prev_lock = lock
             self.writer.prev_lock = lock
 
@@ -127,10 +129,11 @@ class DataWriter(Thread):
                 if self.queue is not None:
                     try:
                         lcl = self.queue.get(True, 1)
-                        self.logger.debug("Writer acquires lock of "
-                                          "previous worker: %s",
-                                          str(self.prev_lock))
-                        acquire_lock(self.prev_lock)
+                        if self.prev_lock is not None:
+                            self.logger.debug("Writer acquires lock of "
+                                              "previous worker: %s",
+                                              str(self.prev_lock))
+                            acquire_lock(self.prev_lock)
                         self.queue.task_done()
                     except Queue.Empty:
                         # After all the items have been processed, release the
@@ -189,10 +192,11 @@ class DataWriter(Thread):
                     lcl = None
                     # After all the items have been processed, release the
                     # lock for the previous worker
-                    self.logger.debug("Writer releses lock of "
-                                      "previous worker: %s",
-                                      str(self.prev_lock))
-                    release_lock(self.prev_lock)
+                    if self.prev_lock is not None:
+                        self.logger.debug("Writer releses lock of "
+                                          "previous worker: %s",
+                                          str(self.prev_lock))
+                        release_lock(self.prev_lock)
                 else:
                     time.sleep(1)
 
