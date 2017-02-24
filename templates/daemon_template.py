@@ -7,7 +7,7 @@ import Queue
 from threading import Thread
 import time
 
-from trollflow_sat import utils
+from trollflow.utils import acquire_lock, release_lock
 
 
 class TemplateContainer(object):
@@ -86,14 +86,22 @@ class Worker(Thread):
             if self.input_queue is not None:
                 try:
                     data = self.input_queue.get(True, 1)
+                    self.logger.debug("TemplateDaemon acquires lock of "
+                                      "previous worker: %s",
+                                      str(self.prev_lock))
+                    acquire_lock(self.prev_lock)
+                    self.queue.task_done()
                 except Queue.Empty:
-                    # After all the items have been processed, release the
-                    # lock for the previous worker
-                    utils.release_lock(self.prev_lock)
                     continue
                 self.logger.info("New data received.")
                 res = do_stuff(data)
                 self.output_queue.put(res)
+                # After all the items have been processed, release the
+                # lock for the previous worker
+                self.logger.debug("Writer releses lock of "
+                                  "previous worker: %s",
+                                  str(self.prev_lock))
+                release_lock(self.prev_lock)
             else:
                 time.sleep(1)
 

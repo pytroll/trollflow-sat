@@ -6,6 +6,7 @@ import yaml
 import time
 
 from trollflow_sat import utils
+from trollflow.utils import acquire_lock, release_lock
 from trollflow.workflow_component import AbstractWorkflowComponent
 from mpop.satellites import GenericFactory as GF
 
@@ -26,16 +27,14 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        self.logger.debug("Scene loader acquires lock of previous worker: %s",
-                          str(context["prev_lock"]))
-        utils.acquire_lock(context["prev_lock"])
-
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in compositor: %s",
                           str(self.use_lock))
-        if not self.use_lock:
-            utils.release_lock(context["prev_lock"])
+        if self.use_lock:
+            self.logger.debug("Scene loader acquires lock of previous "
+                              "worker: %s", str(context["prev_lock"]))
+            acquire_lock(context["prev_lock"])
 
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
@@ -55,7 +54,7 @@ class SceneLoader(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Scene loader acquires own lock %s",
                                   str(context["lock"]))
-                utils.acquire_lock(context["lock"])
+                acquire_lock(context["lock"])
             grp_area_def_names = product_config["groups"][group]
 
             self.logger.debug("Loading data for group %s with areas %s",
@@ -82,7 +81,7 @@ class SceneLoader(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Scene loader releases own lock %s",
                                   str(context["lock"]))
-                utils.release_lock(context["lock"])
+                release_lock(context["lock"])
                 # Wait 1 second to ensure next worker has time to acquire the
                 # lock
                 time.sleep(1)
@@ -93,7 +92,7 @@ class SceneLoader(AbstractWorkflowComponent):
         # After all the items have been processed, release the lock for
         # the previous step
         self.logger.debug("Scene loader releses lock of previous worker")
-        utils.release_lock(context["prev_lock"])
+        release_lock(context["prev_lock"])
 
     def post_invoke(self):
         """Post-invoke"""

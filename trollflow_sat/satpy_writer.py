@@ -8,6 +8,7 @@ import os.path
 from posttroll.publisher import Publish
 from posttroll.message import Message
 from trollflow_sat import utils
+from trollflow.utils import acquire_lock, release_lock
 
 
 class DataWriterContainer(object):
@@ -129,7 +130,7 @@ class DataWriter(Thread):
                         self.logger.debug("Writer acquires lock of "
                                           "previous worker: %s",
                                           str(self.prev_lock))
-                        utils.acquire_lock(self.prev_lock)
+                        acquire_lock(self.prev_lock)
                         self.queue.task_done()
                     except Queue.Empty:
                         # After all the items have been processed, release the
@@ -191,7 +192,7 @@ class DataWriter(Thread):
                     self.logger.debug("Writer releses lock of "
                                       "previous worker: %s",
                                       str(self.prev_lock))
-                    utils.release_lock(self.prev_lock)
+                    release_lock(self.prev_lock)
                 else:
                     time.sleep(1)
 

@@ -6,6 +6,7 @@ import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
+from trollflow.utils import acquire_lock, release_lock
 
 
 class CompositeGenerator(AbstractWorkflowComponent):
@@ -23,16 +24,14 @@ class CompositeGenerator(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
-        self.logger.debug("Compositor acquires lock of previous worker: %s",
-                          str(context["prev_lock"]))
-        utils.acquire_lock(context["prev_lock"])
-
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in compositor: %s",
                           str(self.use_lock))
-        if not self.use_lock:
-            utils.release_lock(context["prev_lock"])
+        if self.use_lock:
+            self.logger.debug("Compositor acquires lock of previous "
+                              "worker: %s", str(context["prev_lock"]))
+            acquire_lock(context["prev_lock"])
 
         data = context["content"]
         with open(context["product_list"], "r") as fid:
@@ -43,7 +42,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Compositor acquires own lock %s",
                                   str(context["lock"]))
-                utils.acquire_lock(context["lock"])
+                acquire_lock(context["lock"])
 
             self.logger.info("Creating composite %s", prod)
             try:
@@ -73,7 +72,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Compositor releases own lock %s",
                                   str(context["lock"]))
-                utils.release_lock(context["lock"])
+                release_lock(context["lock"])
                 # Wait 1 second to ensure next worker has time to acquire the
                 # lock
                 time.sleep(1)
@@ -82,7 +81,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
         # the previous step
         self.logger.debug("Compositor releses lock of previous worker: %s",
                           str(context["prev_lock"]))
-        utils.release_lock(context["prev_lock"])
+        release_lock(context["prev_lock"])
 
     def post_invoke(self):
         """Post-invoke"""
