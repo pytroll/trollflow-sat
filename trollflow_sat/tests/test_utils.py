@@ -45,7 +45,7 @@ class TestUtils(unittest.TestCase):
     config = ordered_load(StringIO(CONFIG_MINIMAL))
     info = {'time': dt.datetime(2016, 11, 7, 12, 0),
             'platform_name': 'Meteosat-10',
-            'areaname': 'EPSG4326',
+            'area_id': 'EPSG4326',
             'productname': 'dummy'}
 
     def test_create_fnames(self):
