@@ -97,7 +97,8 @@ def create_fnames(info, product_config, prod_id):
     fnames = []
     for fmt in formats:
         info["format"] = fmt["format"]
-        fnames.append(compose(pattern, info))
+        # Ensure non-unicode filename
+        fnames.append(str(compose(pattern, info)))
 
     return (fnames, prod_name)
 
