@@ -42,6 +42,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
         global_data = self.create_scene_from_message(msg)
         if global_data is None:
+            release_lock(context["lock"])
             return
 
         # use_extern_calib = product_config["common"].get("use_extern_calib",
@@ -69,10 +70,9 @@ class SceneLoader(AbstractWorkflowComponent):
 
             context["output_queue"].put(global_data)
 
-            if self.use_lock:
+            if release_lock(context["lock"]):
                 self.logger.debug("Compositor releases own lock %s",
                                   str(context["lock"]))
-                release_lock(context["lock"])
                 # Wait 1 second to ensure next worker has time to acquire the
                 # lock
                 time.sleep(1)

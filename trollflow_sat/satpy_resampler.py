@@ -80,6 +80,7 @@ class Resampler(AbstractWorkflowComponent):
                                   str(context["lock"]))
                 acquire_lock(context["lock"])
             if area_id not in glbl.info["areas"]:
+                release_lock(context["lock"])
                 continue
 
             # Reproject only needed channels
@@ -106,10 +107,9 @@ class Resampler(AbstractWorkflowComponent):
             del lcl
             lcl = None
 
-            if self.use_lock:
+            if release_lock(context["lock"]):
                 self.logger.debug("Resampler releases own lock %s",
                                   str(context["lock"]))
-                release_lock(context["lock"])
                 # Wait 1 second to ensure next worker has time to acquire the
                 # lock
                 time.sleep(1)

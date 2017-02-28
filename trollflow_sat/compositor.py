@@ -49,10 +49,12 @@ class CompositeGenerator(AbstractWorkflowComponent):
                 func = getattr(data.image, prod)
                 img = func()
                 if img is None:
+                    release_lock(context["lock"])
                     continue
                 img.info.update(data.info)
             except (AttributeError, KeyError):
                 self.logger.warning("Invalid composite, skipping")
+                release_lock(context["lock"])
                 continue
 
             # Get filename and product name from product config
