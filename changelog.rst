@@ -1,6 +1,114 @@
 Changelog
 =========
 
+v0.2.0 (2017-02-28)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.1.0 → 0.2.0. [Panu Lahtinen]
+
+- Add missing calls to release_lock() [Panu Lahtinen]
+
+- Ensure non-unicode filename (I'm looking at you, gdal) [Panu Lahtinen]
+
+- Fix dictionary key naming "areaname" to "area_id" [Panu Lahtinen]
+
+- Ensure downstream workers have finished before releasing upstream
+  locks. [Panu Lahtinen]
+
+- Add use_lock for daemons to config templates. [Panu Lahtinen]
+
+- Add "use_lock" kwarg to daemons, lock only if set to True. [Panu
+  Lahtinen]
+
+- Adjust lock handling order, use trollflow.utils for lock
+  acquire/release. [Panu Lahtinen]
+
+- Move lock acquire/release to trollflow.utils. [Panu Lahtinen]
+
+- Fix locking, add data reload, add satproj. [Panu Lahtinen]
+
+  - use RLock instead of Lock
+  - fix incorrectly understood lock acquire/release
+  - reload data for each area group
+  - make it possible to save data in satellite projection by
+    defining areaname as "satproj"
+  - check lock usage as first step in invoke()
+  - if using locking, wait 1 sec after releasing local lock
+
+
+- Add config examples for locking. [Panu Lahtinen]
+
+- Remove unnecessary "content" dictionaries. [Panu Lahtinen]
+
+- Delete incomplete plugin. [Panu Lahtinen]
+
+- Fix locking. [Panu Lahtinen]
+
+- Add locking. [Panu Lahtinen]
+
+- Add queue.task_done() [Panu Lahtinen]
+
+- Remove incomplete components. [Panu Lahtinen]
+
+- PEP8. [Panu Lahtinen]
+
+- PEP8. [Panu Lahtinen]
+
+- PEP8. [Panu Lahtinen]
+
+- PEP8. [Panu Lahtinen]
+
+- Fix package name for coverage. [Panu Lahtinen]
+
+- Update "format" section. [Panu Lahtinen]
+
+- Fix intendation. [Panu Lahtinen]
+
+- Add config option for use_threading. [Panu Lahtinen]
+
+- Fix class names, change items under "config" to dicts. [Panu Lahtinen]
+
+- Adjust log messages, set output queues to None by default. [Panu
+  Lahtinen]
+
+- Adjust log messages. [Panu Lahtinen]
+
+- Change default argument of nameservers from [] to None and handle the
+  change. [Panu Lahtinen]
+
+- Fix unittest so that they use ordered_load and the new format
+  structure. [Panu Lahtinen]
+
+- Return list instead of a set. [Panu Lahtinen]
+
+- Remove hardcoded loading of composite "overview" [Panu Lahtinen]
+
+- Fix writer indexing. [Panu Lahtinen]
+
+- Make it possible to define specific writers for satpy. [Panu Lahtinen]
+
+- Fix function name. [Panu Lahtinen]
+
+- Add handling for dataset messages and placeholder for collections.
+  [Panu Lahtinen]
+
+- Add log config example. [Panu Lahtinen]
+
+- Add tests for time name adjustments. [Panu Lahtinen]
+
+- Fix time name adjustment, ignore time tags having 'proc' and 'end' in
+  them. [Panu Lahtinen]
+
+- Add plugins using satpy instead of mpop, add example YAML configs.
+  [Panu Lahtinen]
+
+- Add logger, figure out time name used in filename pattern and metadata
+  and use them to update pattern if necessary. [Panu Lahtinen]
+
+- Change composites from list to dict. [Panu Lahtinen]
+
 v0.1.0 (2016-11-22)
 -------------------
 
