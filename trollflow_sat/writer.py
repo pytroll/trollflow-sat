@@ -8,6 +8,7 @@ import os.path
 from posttroll.publisher import Publish
 from posttroll.message import Message
 from trollflow.utils import acquire_lock, release_lock
+from trollsift import compose
 
 
 class DataWriterContainer(object):
@@ -160,7 +161,12 @@ class DataWriter(Thread):
                                    }
                         # if self._topic is not None:
                         if self._topic is not None:
-                            msg = Message(self._topic, "file", to_send)
+                            topic = self._topic
+                            if area_data is not None:
+                                topic = compose(topic,  area_data)
+                            else:
+                                topic = compose(topic, {'area_id': 'satproj'})
+                            msg = Message(topic, "file", to_send)
                             pub.send(str(msg))
                             self.logger.debug("Sent message: %s", str(msg))
                         self.logger.info("Saved %s", fname)

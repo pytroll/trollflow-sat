@@ -9,6 +9,7 @@ from posttroll.publisher import Publish
 from posttroll.message import Message
 from trollflow_sat import utils
 from trollflow.utils import acquire_lock, release_lock
+from trollsift import compose
 
 
 class DataWriterContainer(object):
@@ -170,20 +171,32 @@ class DataWriter(Thread):
                             self.logger.info("Saved %s", fname)
 
                             area = lcl[prod].info["area"]
-                            to_send = {"nominal_time": info[time_name],
+                            try:
+                                area_data = {"name": area.name,
+                                             "area_id": area.area_id,
+                                             "proj_id": area.proj_id,
+                                             "proj4": area.proj4_string,
+                                             "shape": (area.x_size,
+                                                       area.y_size)
+                                             }
+                            except AttributeError:
+                                area_data = None
+
+                            to_send = {"nominal_time": info["time_slot"],
                                        "uid": os.path.basename(fname),
                                        "uri": os.path.abspath(fname),
-                                       "area": {"name": area.name,
-                                                "area_id": area.area_id,
-                                                "proj_id": area.proj_id,
-                                                "proj4": area.proj4_string,
-                                                "shape": (area.x_size,
-                                                          area.y_size)
-                                                },
+                                       "area": area_data,
                                        "productname": info["productname"]
                                        }
 
                             if self._topic is not None:
+                                topic = self._topic
+                                if area_data is not None:
+                                    topic = compose(topic,  area_data)
+                                else:
+                                    topic = compose(topic,
+                                                    {'area_id': 'satproj'})
+
                                 msg = Message(self._topic, "file", to_send)
                                 pub.send(str(msg))
                                 self.logger.debug("Sent message: %s", str(msg))
