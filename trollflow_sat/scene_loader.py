@@ -41,6 +41,7 @@ class SceneLoader(AbstractWorkflowComponent):
         if instruments is None:
             self.logger.error("No instruments configured!")
             release_lock(context["lock"])
+            release_lock(context["prev_lock"])
             return
 
         with open(context["product_list"], "r") as fid:
@@ -53,6 +54,8 @@ class SceneLoader(AbstractWorkflowComponent):
 
         if global_data is None:
             release_lock(context["lock"])
+            release_lock(context["prev_lock"])
+            self.logger.info("Unable to create Scene, skipping data")
             return
 
         fnames = get_data_fnames(msg)
@@ -146,7 +149,7 @@ class SceneLoader(AbstractWorkflowComponent):
             sensor = mda['sensor']
 
         if sensor not in instruments:
-            self.logger.debug("Unknown sensor, skipping data.")
+            self.logger.debug("Unknown sensor")
             return None
 
         # Create satellite scene
