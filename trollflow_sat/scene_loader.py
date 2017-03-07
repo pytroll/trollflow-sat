@@ -4,6 +4,7 @@
 import logging
 import yaml
 import time
+from urlparse import urlparse
 
 from trollflow_sat import utils
 from trollflow.utils import acquire_lock, release_lock
@@ -36,19 +37,31 @@ class SceneLoader(AbstractWorkflowComponent):
                               "worker: %s", str(context["prev_lock"]))
             acquire_lock(context["prev_lock"])
 
+        instruments = context.get("instruments", None)
+        if instruments is None:
+            self.logger.error("No instruments configured!")
+            release_lock(context["lock"])
+            return
+
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
 
         # Read message
         msg = context['content']
 
-        global_data = self.create_scene_from_message(msg)
+        global_data = self.create_scene_from_message(msg, instruments)
+
         if global_data is None:
             release_lock(context["lock"])
             return
 
+        fnames = get_data_fnames(msg)
         use_extern_calib = product_config["common"].get("use_extern_calib",
                                                         "False")
+        keywords = {'use_extern_calib': use_extern_calib,
+                    'load_again': True}
+        if fnames is not None:
+            keywords['filename'] = fnames
 
         for group in product_config["groups"]:
             # Set lock if locking is used
@@ -69,12 +82,14 @@ class SceneLoader(AbstractWorkflowComponent):
                              str(sorted(reqs)))
 
             if "satproj" in grp_area_def_names:
-                global_data.load(reqs, load_again=True,
-                                 use_extern_calib=use_extern_calib)
+                try:
+                    del keywords["area_def_names"]
+                except KeyError:
+                    pass
+                global_data.load(reqs, **keywords)
             else:
-                global_data.load(reqs, load_again=True,
-                                 area_def_names=grp_area_def_names,
-                                 use_extern_calib=use_extern_calib)
+                keywords["area_def_names"] = grp_area_def_names
+                global_data.load(reqs, **keywords)
 
             global_data.info["areas"] = grp_area_def_names
             context["output_queue"].put(global_data)
@@ -103,13 +118,13 @@ class SceneLoader(AbstractWorkflowComponent):
         """Post-invoke"""
         pass
 
-    def create_scene_from_message(self, msg):
+    def create_scene_from_message(self, msg, instruments):
         """Parse the message *msg* and return a corresponding MPOP scene.
         """
         if msg.type in ["file", 'collection', 'dataset']:
-            return self.create_scene_from_mda(msg.data)
+            return self.create_scene_from_mda(msg.data, instruments)
 
-    def create_scene_from_mda(self, mda):
+    def create_scene_from_mda(self, mda, instruments):
         """Read the metadata *mda* and return a corresponding MPOP scene.
         """
         time_slot = (mda.get('start_time') or
@@ -129,6 +144,10 @@ class SceneLoader(AbstractWorkflowComponent):
         else:
             sensor = mda['sensor']
 
+        if sensor not in instruments:
+            self.logger.debug("Unknown sensor, skipping data.")
+            return None
+
         # Create satellite scene
         global_data = GF.create_scene(satname=str(platform),
                                       satnumber='',
@@ -145,3 +164,21 @@ class SceneLoader(AbstractWorkflowComponent):
         global_data.info['time'] = time_slot
 
         return global_data
+
+
+def get_data_fnames(msg):
+    """Get input data filenames from the message"""
+    # Add list of filenames to info dictionary
+    if "uri" in msg.data:
+        data_fnames = [urlparse(msg.data["uri"]).path, ]
+    elif "dataset" in msg.data:
+        data_fnames = \
+            [urlparse(itm["uri"]).path for itm in msg.data["dataset"]]
+    elif "collection" in msg.data:
+        data_fnames = \
+            [urlparse(itm["uri"]).path for itm in msg.data["collection"]]
+
+    else:
+        data_fnames = None
+
+    return data_fnames
