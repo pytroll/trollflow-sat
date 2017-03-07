@@ -62,6 +62,7 @@ class SceneLoader(AbstractWorkflowComponent):
                     'load_again': True}
         if fnames is not None:
             keywords['filename'] = fnames
+            self.logger.debug("Loading from files: %s", str(fnames))
 
         for group in product_config["groups"]:
             # Set lock if locking is used
