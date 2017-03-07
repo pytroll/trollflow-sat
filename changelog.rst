@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v0.3.0 (2017-03-07)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.2.0 → 0.3.0. [Panu Lahtinen]
+
+- Compose the topic to include {area_id} (if configured) [Panu Lahtinen]
+
 v0.2.0 (2017-02-28)
 -------------------
 
