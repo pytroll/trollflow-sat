@@ -33,6 +33,8 @@ work:
         - trollflow_sat.scene_loader.SceneLoader:
             product_list: *product_list
             use_lock: *use_locks
+            instruments:
+                - avhrr/3
     - type: workflow
       name: pansharpener
       Workflow:
