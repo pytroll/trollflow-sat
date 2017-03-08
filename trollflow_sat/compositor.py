@@ -49,7 +49,8 @@ class CompositeGenerator(AbstractWorkflowComponent):
                                   str(context["lock"]))
                 acquire_lock(context["lock"])
 
-            if utils.bad_sunzen_range(data.area, product_config, prod,
+            if utils.bad_sunzen_range(data.area, product_config,
+                                      data.info["area_id"], prod,
                                       data.time_slot):
                 self.logger.info("Sun zenith angle out of valid range, "
                                  "skipping")
