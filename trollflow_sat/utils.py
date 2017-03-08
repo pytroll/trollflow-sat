@@ -186,7 +186,7 @@ def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
         lon, lat = area.get_lonlat(y_idx, x_idx)
 
     sunzen = astronomy.sun_zenith_angle(time_slot, lon, lat)
-    LOGGER.debug("Sun zenith angle is %f.2 degrees", sunzen)
+    LOGGER.debug("Sun zenith angle is %.2f degrees", sunzen)
 
     try:
         limit = product_conf["sunzen_night_minimum"]
