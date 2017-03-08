@@ -150,7 +150,7 @@ def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
     """Check if Sun zenith angle is valid at the configured location."""
     product_conf = product_config["product_list"][area_id]["products"]
 
-    if ("sunzen_night_minimum" not in product_conf or
+    if ("sunzen_night_minimum" not in product_conf and
             "sunzen_day_maximum" not in product_conf):
         return False
 
