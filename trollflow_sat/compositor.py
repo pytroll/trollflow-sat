@@ -3,6 +3,10 @@
 import logging
 import yaml
 import time
+try:
+    from ConfigParser import NoSectionError
+except ImportError
+    from configparser import NoSectionError
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
@@ -52,7 +56,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
                     release_lock(context["lock"])
                     continue
                 img.info.update(data.info)
-            except (AttributeError, KeyError):
+            except (AttributeError, KeyError, NoSectionError):
                 self.logger.warning("Invalid composite, skipping")
                 release_lock(context["lock"])
                 continue
