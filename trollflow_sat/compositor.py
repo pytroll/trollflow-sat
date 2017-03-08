@@ -5,7 +5,7 @@ import yaml
 import time
 try:
     from ConfigParser import NoSectionError
-except ImportError
+except ImportError:
     from configparser import NoSectionError
 
 from trollflow.workflow_component import AbstractWorkflowComponent
@@ -38,6 +38,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
             acquire_lock(context["prev_lock"])
 
         data = context["content"]
+
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
 
