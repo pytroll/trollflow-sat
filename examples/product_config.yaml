@@ -37,9 +37,15 @@ product_list:
     products: &eurol_products
       vis08: # product ID for getting the compositor
         productname: vis08 # name used in filename composing
-        sunzen_day_maximum: 100
-        # sunzen_lonlat: [25, 60]
+        # Sun zenith angle limits can be set, give only one of the following
         # sunzen_night_minimum: 80
+        # sunzen_day_maximum: 100
+        # Sun zenith angle check location can be given as lon/lat ...
+        # sunzen_lon: 25.0
+        # sunzen_lat: 60.0
+        # ... or image X/Y indices
+        # sunzen_x_idx: 123
+        # sunzen_x_idx: 234
         # We've set the output directory in global scope, so no need here
         # output_dir:
         #   /tmp/
@@ -52,7 +58,7 @@ product_list:
         # NOTE: different pattern, we'll override the global value for
         # this product
         fname_pattern: "{time:%Y%m%d%H%M}_{platform_name}_{areaname}_{productname}.{format}"
-        
+
       ir108: # product ID for getting the compositor
         productname: ir108 # name used in filename composing
         sunzen_night_minimum: 80
@@ -68,7 +74,7 @@ product_list:
             writer: null
           # - nc
         fname_pattern: "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}"
-        
+
   euron1: # area ID used to get the area definition
     areaname: euron1 # name used in filename composing
     # See the product list for "eurol" area, we'll use the same here

@@ -3,6 +3,10 @@ import logging
 
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
+try:
+    from pyorbital import astronomy
+except ImportError:
+    astronomy = None
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
@@ -140,3 +144,64 @@ def find_time_name(info):
         if "time" in key and "end" not in key and "proc" not in key:
             return key
     return None
+
+
+def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
+    """Check if Sun zenith angle is valid at the configured location."""
+    product_conf = product_config["product_list"][area_id]["products"]
+
+    if ("sunzen_night_minimum" not in product_conf or
+            "sunzen_day_maximum" not in product_conf):
+        return False
+
+    if astronomy is None:
+        LOGGER.warning("Pyorbital not installed, unable to calculate "
+                       "Sun zenith angles!")
+        return False
+
+    if area.lons is None:
+        area.lons, area.lats = area.get_lonlats()
+
+    lon, lat = None, None
+
+    try:
+        lon = product_conf["sunzen_lon"]
+        lat = product_conf["sunzen_lat"]
+    except KeyError:
+        pass
+
+    if lon is None or lat is None:
+        try:
+            x_idx = product_conf["sunzen_x_idx"]
+            y_idx = product_conf["sunzen_y_idx"]
+            lon = area.lons[x_idx]
+            lat = area.lats[y_idx]
+        except KeyError:
+            pass
+
+    if lon is None or lat is None:
+        LOGGER.info("Using area center for Sun zenith angle calculation")
+        y_idx = int(area.y_size / 2)
+        x_idx = int(area.x_size / 2)
+        lon, lat = area.get_lonlat(y_idx, x_idx)
+
+    sunzen = astronomy.sun_zenith_angle(time_slot, lon, lat)
+    LOGGER.debug("Sun zenith angle is %f.2 degrees", sunzen)
+
+    try:
+        limit = product_conf["sunzen_night_minimum"]
+        if sunzen < limit:
+            return True
+        else:
+            return False
+    except KeyError:
+        pass
+
+    try:
+        limit = product_conf["sunzen_day_maximum"]
+        if sunzen > limit:
+            return True
+        else:
+            return False
+    except KeyError:
+        pass

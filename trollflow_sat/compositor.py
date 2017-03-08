@@ -49,6 +49,13 @@ class CompositeGenerator(AbstractWorkflowComponent):
                                   str(context["lock"]))
                 acquire_lock(context["lock"])
 
+            if utils.bad_sunzen_range(data.area, product_config, prod,
+                                      data.time_slot):
+                self.logger.info("Sun zenith angle out of valid range, "
+                                 "skipping")
+                release_lock(context["lock"])
+                continue
+
             self.logger.info("Creating composite %s", prod)
             try:
                 func = getattr(data.image, prod)
