@@ -5,6 +5,7 @@ import logging
 import yaml
 import time
 from urlparse import urlparse
+from struct import error as StructError
 
 from trollflow_sat import utils
 from trollflow.utils import acquire_lock, release_lock
@@ -73,6 +74,13 @@ class SceneLoader(AbstractWorkflowComponent):
                 self.logger.debug("Scene loader acquires own lock %s",
                                   str(context["lock"]))
                 acquire_lock(context["lock"])
+
+            if "collection_area_id" in msg.data:
+                if group != msg.data["collection_area_id"]:
+                    self.logger.debug("Collection not for this area, skipping")
+                    release_lock(context["lock"])
+                    continue
+
             grp_area_def_names = product_config["groups"][group]
 
             self.logger.debug("Loading data for group %s with areas %s",
@@ -85,15 +93,20 @@ class SceneLoader(AbstractWorkflowComponent):
             self.logger.info("Loading required channels for this group: %s",
                              str(sorted(reqs)))
 
-            if "satproj" in grp_area_def_names:
-                try:
-                    del keywords["area_def_names"]
-                except KeyError:
-                    pass
-                global_data.load(reqs, **keywords)
-            else:
-                keywords["area_def_names"] = grp_area_def_names
-                global_data.load(reqs, **keywords)
+            try:
+                if "satproj" in grp_area_def_names:
+                    try:
+                        del keywords["area_def_names"]
+                    except KeyError:
+                        pass
+                    global_data.load(reqs, **keywords)
+                else:
+                    keywords["area_def_names"] = grp_area_def_names
+                    global_data.load(reqs, **keywords)
+            except (StructError, IOError):
+                self.logger.error("Data could not be read!")
+                release_lock(context["lock"])
+                continue
 
             global_data.info["areas"] = grp_area_def_names
             context["output_queue"].put(global_data)
