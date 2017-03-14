@@ -162,7 +162,7 @@ class SceneLoader(AbstractWorkflowComponent):
             sensor = mda['sensor']
 
         if sensor not in instruments:
-            self.logger.debug("Unknown sensor")
+            self.logger.debug("Unknown sensor, skipping data.")
             return None
 
         # Create satellite scene
