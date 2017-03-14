@@ -198,8 +198,9 @@ def get_data_fnames(msg):
             data_fnames = \
                 [urlparse(itm["uri"]).path for itm in msg.data["collection"]]
         elif "dataset" in msg.data["collection"][0]:
-            data_fnames = \
-                [urlparse(itm["dataset"][0]["uri"]).path for itm in
-                    msg.data["collection"]]
+            data_fnames = []
+            for dset in msg.data["collection"]:
+                for itm in dset["dataset"]:
+                    data_fnames.append(urlparse(itm["uri"]).path)
 
     return data_fnames
