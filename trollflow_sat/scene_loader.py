@@ -186,21 +186,20 @@ class SceneLoader(AbstractWorkflowComponent):
 def get_data_fnames(msg):
     """Get input data filenames from the message"""
     # Add list of filenames to info dictionary
+    data_fnames = None
+
     if "uri" in msg.data:
         data_fnames = [urlparse(msg.data["uri"]).path, ]
     elif "dataset" in msg.data:
         data_fnames = \
             [urlparse(itm["uri"]).path for itm in msg.data["dataset"]]
     elif "collection" in msg.data:
-        if "uri" in msg.data["collection"]:
+        if "uri" in msg.data["collection"][0]:
             data_fnames = \
                 [urlparse(itm["uri"]).path for itm in msg.data["collection"]]
-        elif "dataset" in msg.data["collection"]:
+        elif "dataset" in msg.data["collection"][0]:
             data_fnames = \
                 [urlparse(itm["dataset"][0]["uri"]).path for itm in
                     msg.data["collection"]]
-
-    else:
-        data_fnames = None
 
     return data_fnames
