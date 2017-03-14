@@ -1,6 +1,50 @@
 Changelog
 =========
 
+v0.4.0 (2017-03-14)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.3.0 → 0.4.0. [Panu Lahtinen]
+
+- Merge branch 'master' into develop. [Panu Lahtinen]
+
+- Add list of used instruments. [Panu Lahtinen]
+
+- Fix getting filenames from collected datasets. [Panu Lahtinen]
+
+- Fix checking what type of collection is used. [Panu Lahtinen]
+
+- Fix reading filenames from a collection. [Panu Lahtinen]
+
+- Add check for collection id, catch some errors when loading data.
+  [Panu Lahtinen]
+
+- Fix formatting of log message. [Panu Lahtinen]
+
+- Fix typo. [Panu Lahtinen]
+
+- Get configuration for single product. [Panu Lahtinen]
+
+- Fix incorrect logic. [Panu Lahtinen]
+
+- Add missing argument. [Panu Lahtinen]
+
+- Add a possibility to limit production based on Sun zenith angle. [Panu
+  Lahtinen]
+
+- Fix syntax error. [Panu Lahtinen]
+
+- Catch NoSectionError when trying to create composites. [Panu Lahtinen]
+
+- Release previous lock when skipping data, add logging. [Panu Lahtinen]
+
+- Add log message listing used files. [Panu Lahtinen]
+
+- Check used instruments, give data filenames as arguments to load()
+  [Panu Lahtinen]
+
 v0.3.0 (2017-03-07)
 -------------------
 
