@@ -9,6 +9,7 @@ except ImportError:
     astronomy = None
 from posttroll.publisher import Publish
 from posttroll.message import Message
+from trollflow.utils import release_lock
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
@@ -254,3 +255,16 @@ def get_monitor_metadata(msg, status=None):
             "status": status}
 
     return data
+
+
+def relese_locks(locks, log=None, log_msg=None):
+    """Release locks and optionnally send log message to *log* function"""
+    if not isinstance(locks, list):
+        locks = [locks]
+    if log is not None and log_msg is not None:
+        log(log_msg)
+    ret_vals = []
+    for lock in locks:
+        ret_vals.append(release_lock(lock))
+
+    return max(ret_vals)
