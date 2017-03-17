@@ -51,6 +51,19 @@ class SceneLoader(AbstractWorkflowComponent):
         # Read message
         msg = context['content']
 
+        monitor_topic = context.get("monitor_topic", None)
+        if monitor_topic is not None:
+            nameservers = context.get("nameservers", None)
+            port = context.get("port", 0)
+            service = context.get("service", None)
+            monitor_metadata = utils.get_monitor_metadata(msg.data,
+                                                          status="start",
+                                                          service=service)
+            utils.send_message(monitor_topic,
+                               "monitor",
+                               monitor_metadata,
+                               nameservers=nameservers, port=port)
+
         global_data = self.create_scene_from_message(msg, instruments)
 
         if global_data is None:
@@ -125,6 +138,14 @@ class SceneLoader(AbstractWorkflowComponent):
         if self.use_lock:
             acquire_lock(context["lock"])
             release_lock(context["lock"])
+
+        if monitor_topic is not None:
+            monitor_metadata["status"] = "completed"
+            utils.send_message(monitor_topic,
+                               "monitor",
+                               monitor_metadata,
+                               nameservers=nameservers,
+                               port=port)
 
         # After all the items have been processed, release the lock for
         # the previous step
