@@ -1,5 +1,6 @@
 import os.path
 import logging
+import datetime as dt
 
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
@@ -7,6 +8,8 @@ try:
     from pyorbital import astronomy
 except ImportError:
     astronomy = None
+from posttroll.publisher import Publish
+from posttroll.message import Message
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
@@ -205,3 +208,50 @@ def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
             return False
     except KeyError:
         pass
+
+
+def send_message(topic, msg_type, msg_data, nameservers=None, port=0):
+    """Send monitoring message"""
+    if nameservers is None:
+        nameservers = []
+    if not isinstance(nameservers, list):
+        nameservers = [nameservers]
+
+    with Publish("trollflow-sat monitor", port=port,
+                 nameservers=nameservers) as pub:
+        msg = Message(topic, msg_type, msg_data)
+        pub.send(str(msg))
+
+
+def _get_data_time_from_message_data(msg_data):
+    """Get data timestamp from message data"""
+    if "nominal_time" in msg_data:
+        data_time = msg_data["nominal_time"]
+    elif "start_time" in msg_data:
+        data_time = msg_data["start_time"]
+    elif "time" in msg_data:
+        data_time = msg_data["time"]
+    else:
+        data_time = None
+
+    return data_time
+
+
+def _get_orbit_number_from_message_data(msg_data):
+    """Get orbit number from message data"""
+    if "orbit_number" in msg_data:
+        return msg_data["orbit_number"]
+    else:
+        return None
+
+
+def get_monitor_metadata(msg, status=None):
+    """Collect metadata for monitoring message"""
+    data = {"message_time": msg.time,
+            "data_time": _get_data_time_from_message_data(msg.data),
+            "platform_name": msg.data["platform_name"],
+            "sensor": msg.data["sensor"],
+            "orbit_number": _get_orbit_number_from_message_data(msg.data),
+            "status": status}
+
+    return data
