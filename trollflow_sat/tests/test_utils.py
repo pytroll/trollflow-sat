@@ -23,6 +23,7 @@ from collections import OrderedDict
 
 from trollflow_sat import utils
 from trollflow.utils import ordered_load
+from posttroll.message import Message
 
 CONFIG_MINIMAL = """common:
   use_extern_calib: false
@@ -46,7 +47,8 @@ class TestUtils(unittest.TestCase):
     info = {'time': dt.datetime(2016, 11, 7, 12, 0),
             'platform_name': 'Meteosat-10',
             'area_id': 'EPSG4326',
-            'productname': 'dummy'}
+            'productname': 'dummy',
+            'sensor': ['seviri']}
 
     def test_create_fnames(self):
         # Absolute minimum config
@@ -101,7 +103,7 @@ class TestUtils(unittest.TestCase):
                          "2016_11_07_12_00_asd.png")
 
         # Change metadata so that the time name doesn't match pattern
-        self.info['foo_time'] = dt.datetime(2016, 11, 7, 12, 0)
+        self.info['start_time'] = self.info['time']
         del self.info['time']
         fnames, prod_name = utils.create_fnames(self.info,
                                                 self.config,
@@ -109,6 +111,38 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(fnames[0],
                          "/tmp/2016/11/07/" +
                          "2016_11_07_12_00_asd.png")
+
+    def test_get_data_time_from_message_data(self):
+        msg = {'time': 'foo'}
+        res = utils._get_data_time_from_message_data(msg)
+        self.assertEqual(res, 'foo')
+        msg = {'nominal_time': 'foo'}
+        res = utils._get_data_time_from_message_data(msg)
+        self.assertEqual(res, 'foo')
+        msg = {'start_time': 'foo'}
+        res = utils._get_data_time_from_message_data(msg)
+        self.assertEqual(res, 'foo')
+        msg = {}
+        res = utils._get_data_time_from_message_data(msg)
+        self.assertIsNone(res)
+
+    def test_get_orbit_number_from_message_data(self):
+        msg = {"orbit_number": 42}
+        res = utils._get_orbit_number_from_message_data(msg)
+        self.assertEqual(res, 42)
+        msg = {}
+        res = utils._get_orbit_number_from_message_data(msg)
+        self.assertIsNone(res)
+
+    def test_get_monitor_metadata(self):
+        msg = Message('/topic', 'monitor', self.info)
+        res = utils.get_monitor_metadata(msg, status='foo')
+        self.assertEqual(res['message_time'], msg.time)
+        self.assertEqual(res['data_time'], self.info["start_time"])
+        self.assertEqual(res['platform_name'], self.info["platform_name"])
+        self.assertEqual(res['sensor'], self.info["sensor"])
+        self.assertIsNone(res['orbit_number'])
+        self.assertEqual(res['status'], 'foo')
 
 
 def suite():
