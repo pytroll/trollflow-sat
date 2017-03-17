@@ -34,7 +34,15 @@ work:
             product_list: *product_list
             use_lock: *use_locks
             instruments:
-                - avhrr/3
+              - avhrr/3
+            # Topic for optional monitoring messages
+            # monitor_topic: /monitor
+            # Name of the running service, used in monitoring messages
+            # service: hrpt
+            # Optional list of nameservers and nameserver port
+            # nameservers:
+            #   - localhost
+            # port: 0
     - type: workflow
       name: pansharpener
       Workflow:
