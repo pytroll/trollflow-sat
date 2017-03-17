@@ -1,6 +1,5 @@
 import os.path
 import logging
-import datetime as dt
 
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
