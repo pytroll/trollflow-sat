@@ -10,7 +10,7 @@ except ImportError:
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock, release_lock
+from trollflow.utils import acquire_lock
 
 
 class CompositeGenerator(AbstractWorkflowComponent):
@@ -52,9 +52,9 @@ class CompositeGenerator(AbstractWorkflowComponent):
             if utils.bad_sunzen_range(data.area, product_config,
                                       data.info["area_id"], prod,
                                       data.time_slot):
-                self.logger.info("Sun zenith angle out of valid range, "
-                                 "skipping")
-                release_lock(context["lock"])
+                utils.release_locks([context["lock"]], log=self.logger.info,
+                                    log_msg="Sun zenith angle out of valid " +
+                                    "range, skipping")
                 continue
 
             self.logger.info("Creating composite %s", prod)
@@ -62,12 +62,13 @@ class CompositeGenerator(AbstractWorkflowComponent):
                 func = getattr(data.image, prod)
                 img = func()
                 if img is None:
-                    release_lock(context["lock"])
+                    utils.release_locks([context["lock"]])
                     continue
                 img.info.update(data.info)
             except (AttributeError, KeyError, NoSectionError):
-                self.logger.warning("Invalid composite, skipping")
-                release_lock(context["lock"])
+                utils.release_locks([context["lock"]],
+                                    log=self.logger.warning,
+                                    log_msg="Invalid composite, skipping")
                 continue
 
             # Get filename and product name from product config
@@ -85,9 +86,9 @@ class CompositeGenerator(AbstractWorkflowComponent):
             img = None
 
             if self.use_lock:
-                self.logger.debug("Compositor releases own lock %s",
-                                  str(context["lock"]))
-                release_lock(context["lock"])
+                self.release_locks([context["lock"]], log=self.logger.debug,
+                                   log_msg="Compositor releases own lock %s" %
+                                   str(context["lock"]))
                 # Wait 1 second to ensure next worker has time to acquire the
                 # lock
                 time.sleep(1)
@@ -95,13 +96,14 @@ class CompositeGenerator(AbstractWorkflowComponent):
         # Wait until the lock has been released downstream
         if self.use_lock:
             acquire_lock(context["lock"])
-            release_lock(context["lock"])
+            utils.release_locks([context["lock"]])
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.logger.debug("Compositor releses lock of previous worker: %s",
-                          str(context["prev_lock"]))
-        release_lock(context["prev_lock"])
+        utils.release_locks([context["prev_lock"]], log=self.logger.debug,
+                            log_msg="Compositor releses lock of "
+                            "previous worker: %s" %
+                            str(context["prev_lock"]))
 
     def post_invoke(self):
         """Post-invoke"""

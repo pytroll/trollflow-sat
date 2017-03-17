@@ -6,7 +6,7 @@ import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock, release_lock
+from trollflow.utils import acquire_lock
 
 
 class Resampler(AbstractWorkflowComponent):
@@ -71,7 +71,7 @@ class Resampler(AbstractWorkflowComponent):
                                   str(context["lock"]))
                 acquire_lock(context["lock"])
             if area_id not in glbl.info["areas"]:
-                release_lock(context["lock"])
+                utils.release_locks([context["lock"]])
                 continue
 
             # Reproject only needed channels
@@ -92,7 +92,7 @@ class Resampler(AbstractWorkflowComponent):
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
-            if release_lock(context["lock"]):
+            if utils.release_locks([context["lock"]]):
                 self.logger.debug("Resampler releases own lock %s",
                                   str(context["lock"]))
                 # Wait 1 second to ensure next worker has time to acquire the
@@ -102,13 +102,15 @@ class Resampler(AbstractWorkflowComponent):
         # Wait until the lock has been released downstream
         if self.use_lock:
             acquire_lock(context["lock"])
-            release_lock(context["lock"])
+            utils.release_locks([context["lock"]])
 
         # After all the items have been processed, release the lock for
         # the previous step
         self.logger.debug("Resampler releses lock of previous worker: %s",
                           str(context["prev_lock"]))
-        release_lock(context["prev_lock"])
+        utils.release_locks([context["prev_lock"]], log=self.logger.debug,
+                            log_msg="Resampler releses lock of previous " +
+                            "worker: %s" % str(context["prev_lock"]))
 
     def post_invoke(self):
         """Post-invoke"""

@@ -8,7 +8,7 @@ from urlparse import urlparse
 from struct import error as StructError
 
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock, release_lock
+from trollflow.utils import acquire_lock
 from trollflow.workflow_component import AbstractWorkflowComponent
 from mpop.satellites import GenericFactory as GF
 
@@ -40,9 +40,9 @@ class SceneLoader(AbstractWorkflowComponent):
 
         instruments = context.get("instruments", None)
         if instruments is None:
-            self.logger.error("No instruments configured!")
-            release_lock(context["lock"])
-            release_lock(context["prev_lock"])
+            utils.release_locks([context["lock"], context["prev_lock"]],
+                                log=self.logger.error,
+                                log_msg="No instruments configured!")
             return
 
         with open(context["product_list"], "r") as fid:
@@ -67,9 +67,10 @@ class SceneLoader(AbstractWorkflowComponent):
         global_data = self.create_scene_from_message(msg, instruments)
 
         if global_data is None:
-            release_lock(context["lock"])
-            release_lock(context["prev_lock"])
-            self.logger.info("Unable to create Scene, skipping data")
+            utils.release_locks([context["lock"], context["prev_lock"]],
+                                log=self.logger.info,
+                                log_msg="Unable to create Scene, " +
+                                "skipping data")
             return
 
         fnames = get_data_fnames(msg)
@@ -90,8 +91,10 @@ class SceneLoader(AbstractWorkflowComponent):
 
             if "collection_area_id" in msg.data:
                 if group != msg.data["collection_area_id"]:
-                    self.logger.debug("Collection not for this area, skipping")
-                    release_lock(context["lock"])
+                    utils.release_locks([context["lock"]],
+                                        log=self.logger.debug,
+                                        log_msg="Collection not for this " +
+                                        "area, skipping")
                     continue
 
             grp_area_def_names = product_config["groups"][group]
@@ -117,14 +120,14 @@ class SceneLoader(AbstractWorkflowComponent):
                     keywords["area_def_names"] = grp_area_def_names
                     global_data.load(reqs, **keywords)
             except (StructError, IOError):
-                self.logger.error("Data could not be read!")
-                release_lock(context["lock"])
+                utils.release_locks([context["lock"]], log=self.logger.error,
+                                    log_msg="Data could not be read!")
                 continue
 
             global_data.info["areas"] = grp_area_def_names
             context["output_queue"].put(global_data)
 
-            if release_lock(context["lock"]):
+            if utils.release_locks([context["lock"]]):
                 self.logger.debug("Scene loader releases own lock %s",
                                   str(context["lock"]))
                 # Wait 1 second to ensure next worker has time to acquire the
@@ -137,7 +140,7 @@ class SceneLoader(AbstractWorkflowComponent):
         # Wait until the lock has been released downstream
         if self.use_lock:
             acquire_lock(context["lock"])
-            release_lock(context["lock"])
+            utils.release_locks([context["lock"]])
 
         if monitor_topic is not None:
             monitor_metadata["status"] = "completed"
@@ -149,8 +152,9 @@ class SceneLoader(AbstractWorkflowComponent):
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.logger.debug("Scene loader releses lock of previous worker")
-        release_lock(context["prev_lock"])
+        utils.release_lock([context["prev_lock"]], log=self.logger.debug,
+                           log_msg="Scene loader releses lock of " +
+                           "previous worker")
 
     def post_invoke(self):
         """Post-invoke"""
