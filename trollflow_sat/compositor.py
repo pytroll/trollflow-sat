@@ -10,7 +10,6 @@ except ImportError:
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock
 
 
 class CompositeGenerator(AbstractWorkflowComponent):
@@ -35,7 +34,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
         if self.use_lock:
             self.logger.debug("Compositor acquires lock of previous "
                               "worker: %s", str(context["prev_lock"]))
-            acquire_lock(context["prev_lock"])
+            utils.acquire_lock(context["prev_lock"])
 
         data = context["content"]
 
@@ -47,7 +46,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Compositor acquires own lock %s",
                                   str(context["lock"]))
-                acquire_lock(context["lock"])
+                utils.acquire_lock(context["lock"])
 
             if utils.bad_sunzen_range(data.area, product_config,
                                       data.info["area_id"], prod,
@@ -95,7 +94,7 @@ class CompositeGenerator(AbstractWorkflowComponent):
 
         # Wait until the lock has been released downstream
         if self.use_lock:
-            acquire_lock(context["lock"])
+            utils.acquire_lock(context["lock"])
             utils.release_locks([context["lock"]])
 
         # After all the items have been processed, release the lock for

@@ -6,7 +6,6 @@ import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock
 
 
 class Resampler(AbstractWorkflowComponent):
@@ -31,7 +30,7 @@ class Resampler(AbstractWorkflowComponent):
         if self.use_lock:
             self.logger.debug("Resampler acquires lock of previous worker: %s",
                               str(context["prev_lock"]))
-            acquire_lock(context["prev_lock"])
+            utils.acquire_lock(context["prev_lock"])
 
         glbl = context["content"]
         with open(context["product_list"], "r") as fid:
@@ -69,7 +68,7 @@ class Resampler(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Resampler acquires own lock %s",
                                   str(context["lock"]))
-                acquire_lock(context["lock"])
+                utils.acquire_lock(context["lock"])
             if area_id not in glbl.info["areas"]:
                 utils.release_locks([context["lock"]])
                 continue
@@ -101,13 +100,11 @@ class Resampler(AbstractWorkflowComponent):
 
         # Wait until the lock has been released downstream
         if self.use_lock:
-            acquire_lock(context["lock"])
+            utils.acquire_lock(context["lock"])
             utils.release_locks([context["lock"]])
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.logger.debug("Resampler releses lock of previous worker: %s",
-                          str(context["prev_lock"]))
         utils.release_locks([context["prev_lock"]], log=self.logger.debug,
                             log_msg="Resampler releses lock of previous " +
                             "worker: %s" % str(context["prev_lock"]))
