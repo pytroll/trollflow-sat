@@ -118,7 +118,7 @@ class SceneLoader(AbstractWorkflowComponent):
                 else:
                     keywords["area_def_names"] = grp_area_def_names
                     global_data.load(reqs, **keywords)
-            except (StructError, IOError):
+            except (TypeError, StructError, IOError):
                 utils.release_locks([context["lock"]], log=self.logger.error,
                                     log_msg="Data could not be read!")
                 continue
