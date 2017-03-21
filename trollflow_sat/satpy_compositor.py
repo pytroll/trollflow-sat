@@ -35,11 +35,18 @@ class SceneLoader(AbstractWorkflowComponent):
                               "worker: %s", str(context["prev_lock"]))
             utils.acquire_lock(context["prev_lock"])
 
+        instruments = context.get("instruments", None)
+        if instruments is None:
+            utils.release_locks([context["lock"], context["prev_lock"]],
+                                log=self.logger.error,
+                                log_msg="No instruments configured!")
+            return
+
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
         msg = context['content']
 
-        global_data = self.create_scene_from_message(msg)
+        global_data = self.create_scene_from_message(msg, instruments)
         if global_data is None:
             utils.release_locks([context["lock"], context["prev_lock"]],
                                 log=self.logger.info,
@@ -126,13 +133,13 @@ class SceneLoader(AbstractWorkflowComponent):
         """Post-invoke"""
         pass
 
-    def create_scene_from_message(self, msg):
+    def create_scene_from_message(self, msg, instruments):
         """Parse the message *msg* and return a corresponding MPOP scene.
         """
         if msg.type in ["file", 'collection', 'dataset']:
-            return self.create_scene_from_mda(msg.data, msg.type)
+            return self.create_scene_from_mda(msg.data, msg.type, instruments)
 
-    def create_scene_from_mda(self, mda, msg_type):
+    def create_scene_from_mda(self, mda, msg_type, instruments):
         """Read the metadata *mda* and return a corresponding MPOP scene.
         """
         start_time = (mda.get('start_time') or
@@ -146,6 +153,10 @@ class SceneLoader(AbstractWorkflowComponent):
             sensor = mda['sensor'][0]
         else:
             sensor = mda['sensor']
+
+        if sensor not in instruments:
+            self.logger.debug("Unknown sensor, skipping data.")
+            return None
 
         if msg_type == "dataset":
             filenames = []
