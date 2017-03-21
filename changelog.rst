@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v0.5.1 (2017-03-21)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.5.0 → 0.5.1. [Panu Lahtinen]
+
+- Fix missing acquire_lock. [Panu Lahtinen]
+
 v0.5.0 (2017-03-21)
 -------------------
 
