@@ -8,7 +8,6 @@ from urlparse import urlparse
 from struct import error as StructError
 
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock
 from trollflow.workflow_component import AbstractWorkflowComponent
 from mpop.satellites import GenericFactory as GF
 
@@ -36,7 +35,7 @@ class SceneLoader(AbstractWorkflowComponent):
         if self.use_lock:
             self.logger.debug("Scene loader acquires lock of previous "
                               "worker: %s", str(context["prev_lock"]))
-            acquire_lock(context["prev_lock"])
+            utils.acquire_lock(context["prev_lock"])
 
         instruments = context.get("instruments", None)
         if instruments is None:
@@ -51,6 +50,15 @@ class SceneLoader(AbstractWorkflowComponent):
         # Read message
         msg = context['content']
 
+        global_data = self.create_scene_from_message(msg, instruments)
+
+        if global_data is None:
+            utils.release_locks([context["lock"], context["prev_lock"]],
+                                log=self.logger.info,
+                                log_msg="Unable to create Scene, " +
+                                "skipping data")
+            return
+
         monitor_topic = context.get("monitor_topic", None)
         if monitor_topic is not None:
             nameservers = context.get("nameservers", None)
@@ -63,15 +71,6 @@ class SceneLoader(AbstractWorkflowComponent):
                                "monitor",
                                monitor_metadata,
                                nameservers=nameservers, port=port)
-
-        global_data = self.create_scene_from_message(msg, instruments)
-
-        if global_data is None:
-            utils.release_locks([context["lock"], context["prev_lock"]],
-                                log=self.logger.info,
-                                log_msg="Unable to create Scene, " +
-                                "skipping data")
-            return
 
         fnames = get_data_fnames(msg)
         use_extern_calib = product_config["common"].get("use_extern_calib",
@@ -87,7 +86,7 @@ class SceneLoader(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Scene loader acquires own lock %s",
                                   str(context["lock"]))
-                acquire_lock(context["lock"])
+                utils.acquire_lock(context["lock"])
 
             if "collection_area_id" in msg.data:
                 if group != msg.data["collection_area_id"]:
@@ -139,7 +138,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
         # Wait until the lock has been released downstream
         if self.use_lock:
-            acquire_lock(context["lock"])
+            utils.acquire_lock(context["lock"])
             utils.release_locks([context["lock"]])
 
         if monitor_topic is not None:
