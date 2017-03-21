@@ -10,6 +10,7 @@ except ImportError:
 from posttroll.publisher import Publish
 from posttroll.message import Message
 from trollflow.utils import release_lock
+from trollflow.utils import acquire_lock as trollflow_acquire_lock
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
@@ -268,3 +269,8 @@ def relese_locks(locks, log=None, log_msg=None):
         ret_vals.append(release_lock(lock))
 
     return max(ret_vals)
+
+
+def acquire_lock(lock):
+    """Acquire the given lock"""
+    return trollflow_acquire_lock(lock)
