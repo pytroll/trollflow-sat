@@ -152,7 +152,7 @@ class SceneLoader(AbstractWorkflowComponent):
         # After all the items have been processed, release the lock for
         # the previous step
         utils.release_lock([context["prev_lock"]], log=self.logger.debug,
-                           log_msg="Scene loader releses lock of " +
+                           log_msg="Scene loader releases lock of " +
                            "previous worker")
 
     def post_invoke(self):

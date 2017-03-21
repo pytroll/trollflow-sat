@@ -259,7 +259,7 @@ def get_monitor_metadata(msg, status=None, service=None):
     return data
 
 
-def relese_locks(locks, log=None, log_msg=None):
+def release_locks(locks, log=None, log_msg=None):
     """Release locks and optionnally send log message to *log* function"""
     if not isinstance(locks, list):
         locks = [locks]
