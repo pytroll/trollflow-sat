@@ -1,6 +1,40 @@
 Changelog
 =========
 
+v0.5.0 (2017-03-21)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.4.0 → 0.5.0. [Panu Lahtinen]
+
+- Add missing parameters. [Panu Lahtinen]
+
+- Add check for valid instruments. [Panu Lahtinen]
+
+- Bring satpy plugins up-to-date with mpop versions. [Panu Lahtinen]
+
+- Remove import of acquire_lock(), instead use utils.acquire_lock()
+  [Panu Lahtinen]
+
+- Move monitor messaging after scene creation. [Panu Lahtinen]
+
+- Fix publisher name. [Panu Lahtinen]
+
+- Add monitoring message setting examples. [Panu Lahtinen]
+
+- Use lock release wrapper. [Panu Lahtinen]
+
+- Add wrapper to lock release. [Panu Lahtinen]
+
+- Remove unused import. [Panu Lahtinen]
+
+- Add more tests for utils. [Panu Lahtinen]
+
+- Add helper functions for monitoring messaging. [Panu Lahtinen]
+
+- Add monitoring messages. [Panu Lahtinen]
+
 v0.4.0 (2017-03-14)
 -------------------
 
