@@ -246,14 +246,15 @@ def _get_orbit_number_from_message_data(msg_data):
         return None
 
 
-def get_monitor_metadata(msg, status=None):
+def get_monitor_metadata(msg, status=None, service=None):
     """Collect metadata for monitoring message"""
     data = {"message_time": msg.time,
             "data_time": _get_data_time_from_message_data(msg.data),
             "platform_name": msg.data["platform_name"],
             "sensor": msg.data["sensor"],
             "orbit_number": _get_orbit_number_from_message_data(msg.data),
-            "status": status}
+            "status": status,
+            "service": service}
 
     return data
 
