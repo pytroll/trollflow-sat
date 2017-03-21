@@ -8,7 +8,6 @@ import os.path
 from posttroll.publisher import Publish
 from posttroll.message import Message
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock, release_lock
 from trollsift import compose
 
 
@@ -134,14 +133,13 @@ class DataWriter(Thread):
                             self.logger.debug("Writer acquires lock of "
                                               "previous worker: %s",
                                               str(self.prev_lock))
-                            acquire_lock(self.prev_lock)
+                            utils.acquire_lock(self.prev_lock)
                         self.queue.task_done()
                     except Queue.Empty:
                         # After all the items have been processed, release the
                         # lock for the previous worker
                         continue
                     info = lcl.info.copy()
-                    time_name = utils.find_time_name(info)
                     product_config = lcl.info["product_config"]
                     products = lcl.info["products"]
                     dataset_ids = lcl.info["dataset_ids"]
@@ -206,10 +204,11 @@ class DataWriter(Thread):
                     # After all the items have been processed, release the
                     # lock for the previous worker
                     if self.prev_lock is not None:
-                        self.logger.debug("Writer releses lock of "
-                                          "previous worker: %s",
-                                          str(self.prev_lock))
-                        release_lock(self.prev_lock)
+                        utils.release_locks([self.prev_lock],
+                                            self.logger.debug,
+                                            "Writer releses lock of "
+                                            "previous worker: %s" %
+                                            str(self.prev_lock))
                 else:
                     time.sleep(1)
 

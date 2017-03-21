@@ -6,7 +6,6 @@ import yaml
 import time
 
 from trollflow_sat import utils
-from trollflow.utils import acquire_lock, release_lock
 from trollflow.workflow_component import AbstractWorkflowComponent
 from satpy import Scene
 
@@ -34,7 +33,7 @@ class SceneLoader(AbstractWorkflowComponent):
         if self.use_lock:
             self.logger.debug("Compositor acquires lock of previous "
                               "worker: %s", str(context["prev_lock"]))
-            acquire_lock(context["prev_lock"])
+            utils.acquire_lock(context["prev_lock"])
 
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
@@ -42,8 +41,24 @@ class SceneLoader(AbstractWorkflowComponent):
 
         global_data = self.create_scene_from_message(msg)
         if global_data is None:
-            release_lock(context["lock"])
+            utils.release_locks([context["lock"], context["prev_lock"]],
+                                log=self.logger.info,
+                                log_msg="Unable to create Scene, " +
+                                "skipping data")
             return
+
+        monitor_topic = context.get("monitor_topic", None)
+        if monitor_topic is not None:
+            nameservers = context.get("nameservers", None)
+            port = context.get("port", 0)
+            service = context.get("service", None)
+            monitor_metadata = utils.get_monitor_metadata(msg.data,
+                                                          status="start",
+                                                          service=service)
+            utils.send_message(monitor_topic,
+                               "monitor",
+                               monitor_metadata,
+                               nameservers=nameservers, port=port)
 
         # use_extern_calib = product_config["common"].get("use_extern_calib",
         #                                                 "False")
@@ -53,7 +68,15 @@ class SceneLoader(AbstractWorkflowComponent):
             if self.use_lock:
                 self.logger.debug("Compositor acquires own lock %s",
                                   str(context["lock"]))
-                acquire_lock(context["lock"])
+                utils.acquire_lock(context["lock"])
+
+            if "collection_area_id" in msg.data:
+                if group != msg.data["collection_area_id"]:
+                    utils.release_locks([context["lock"]],
+                                        log=self.logger.debug,
+                                        log_msg="Collection not for this " +
+                                        "area, skipping")
+                    continue
 
             composites = utils.get_satpy_group_composite_names(product_config,
                                                                group)
@@ -65,12 +88,12 @@ class SceneLoader(AbstractWorkflowComponent):
                 global_data.unload(list(reqs_to_unload))
             self.logger.info("Loading required data for this group: %s",
                              ', '.join(sorted(composites)))
+
             # use_extern_calib=use_extern_calib
             global_data.load(composites)
-
             context["output_queue"].put(global_data)
 
-            if release_lock(context["lock"]):
+            if utils.release_locks([context["lock"]]):
                 self.logger.debug("Compositor releases own lock %s",
                                   str(context["lock"]))
                 # Wait 1 second to ensure next worker has time to acquire the
@@ -82,14 +105,22 @@ class SceneLoader(AbstractWorkflowComponent):
 
         # Wait until the lock has been released downstream
         if self.use_lock:
-            acquire_lock(context["lock"])
-            release_lock(context["lock"])
+            utils.acquire_lock(context["lock"])
+            utils.release_locks([context["lock"]])
+
+        if monitor_topic is not None:
+            monitor_metadata["status"] = "completed"
+            utils.send_message(monitor_topic,
+                               "monitor",
+                               monitor_metadata,
+                               nameservers=nameservers,
+                               port=port)
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.logger.debug("Compositor releses lock of previous worker: %s",
-                          str(context["prev_lock"]))
-        release_lock(context["prev_lock"])
+        utils.release_lock([context["prev_lock"]], log=self.logger.debug,
+                           log_msg="Compositor releses lock of previous "
+                           "worker")
 
     def post_invoke(self):
         """Post-invoke"""
