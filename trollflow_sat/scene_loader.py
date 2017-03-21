@@ -64,7 +64,7 @@ class SceneLoader(AbstractWorkflowComponent):
             nameservers = context.get("nameservers", None)
             port = context.get("port", 0)
             service = context.get("service", None)
-            monitor_metadata = utils.get_monitor_metadata(msg.data,
+            monitor_metadata = utils.get_monitor_metadata(msg,
                                                           status="start",
                                                           service=service)
             utils.send_message(monitor_topic,
