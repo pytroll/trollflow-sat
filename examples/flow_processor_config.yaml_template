@@ -80,6 +80,7 @@ work:
         - class: !!python/object:trollflow_sat.writer.DataWriterContainer
             nameservers: []
             port: 0
+            topic: /another/image/yay
             save_settings:
               compression: 6
               # Use "null" instead of "None"

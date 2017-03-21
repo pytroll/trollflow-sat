@@ -4,10 +4,14 @@ config:
   log_config:
     /home/lahtinep/Software/pytroll/config_files/flow_processor_log_config.ini
 
-  # It is possible to select wether to use multithreaded or serial
-  # processing by setting the following boolean.  If not given,
-  # defaults to "true".
-  use_threading: true
+  # It is possible to lock each worker to reduce simultaneous CPU load and
+  # memory usage.  Each step that has *use_lock* set as true will wait until
+  # the next worker has completed the previous task.  This is a global value
+  # that is used below.  The individual values can be set as seen fit for
+  # the planned use. NOTE: dameon workers do not have locks, but will release
+  # locking for the previous Workflow worker.
+  use_locks: &use_locks
+    true
 
 work:
     - type: daemon
@@ -22,7 +26,17 @@ work:
       Workflow:
         - trollflow_sat.satpy_compositor.SceneLoader:
             product_list: *product_list
-
+            instruments:
+              - avhrr/3
+            # Topic for optional monitoring messages
+            # monitor_topic: /monitor
+            # Name of the running service, used in monitoring messages
+            # service: hrpt
+            # Optional list of nameservers and nameserver port
+            # nameservers:
+            #   - localhost
+            # port: 0
+            use_lock: *use_locks
     - type: workflow
       name: satpy_resampler
       Workflow:
@@ -33,7 +47,7 @@ work:
             nprocs: 2
             proj_method: nearest
             product_list: *product_list
-
+            use_lock: *use_locks
     - type: daemon
       name: satpy_writer
       components:
