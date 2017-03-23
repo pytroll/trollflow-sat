@@ -7,7 +7,7 @@ import os.path
 
 from posttroll.publisher import Publish
 from posttroll.message import Message
-from trollflow import utils
+from trollflow_sat import utils
 from trollsift import compose
 
 
