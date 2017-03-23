@@ -85,9 +85,9 @@ class CompositeGenerator(AbstractWorkflowComponent):
             img = None
 
             if self.use_lock:
-                self.release_locks([context["lock"]], log=self.logger.debug,
-                                   log_msg="Compositor releases own lock %s" %
-                                   str(context["lock"]))
+                utils.release_locks([context["lock"]], log=self.logger.debug,
+                                    log_msg="Compositor releases own lock %s" %
+                                    str(context["lock"]))
                 # Wait 1 second to ensure next worker has time to acquire the
                 # lock
                 time.sleep(1)
