@@ -44,6 +44,14 @@ work:
             #   - localhost
             # port: 0
     - type: workflow
+      name: coverage
+      Workflow:
+        - trollflow_sat.coverage.CoverageCheck:
+            use_lock: *use_locks
+            min_coverage:
+              eurol: 20
+              euron: 20
+    - type: workflow
       name: pansharpener
       Workflow:
         - trollflow_sat.enhance.Pansharpener:
