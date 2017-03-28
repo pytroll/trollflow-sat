@@ -4,7 +4,7 @@ import logging
 import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
-from trollflow import utils
+from trollflow_sat import utils
 from mpop.projector import get_area_def
 from trollsched.satpass import Pass
 
@@ -38,7 +38,7 @@ class CoverageCheck(AbstractWorkflowComponent):
                         scene.info['end_time'],
                         instrument=scene.info["sensor"][0])
         areas = []
-        for area_name in scene.info["area_def_names"]:
+        for area_name in scene.info["areas"]:
             self.logger.info("Checking coverage of %s", area_name)
 
             try:
@@ -56,7 +56,7 @@ class CoverageCheck(AbstractWorkflowComponent):
                 continue
 
         if len(areas) > 0:
-            scene.info["area_def_names"] = areas
+            scene.info["areas"] = areas
             context["output_queue"].put(scene)
         else:
             self.logger.info("No areas with enough coverage")
