@@ -99,7 +99,10 @@ class DataWriter(Thread):
         Thread.__init__(self)
         self.queue = queue
         self._loop = False
-        self._save_settings = save_settings
+        if save_settings is not None:
+            self._save_settings = save_settings
+        else:
+            self._save_settings = {}
         self._port = port
         if nameservers is None:
             self._nameservers = []
