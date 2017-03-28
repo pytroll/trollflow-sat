@@ -2,8 +2,10 @@
 
 import numpy as np
 import logging
+import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
+from trollflow_sat import utils
 
 
 class Pansharpener(AbstractWorkflowComponent):
@@ -21,6 +23,15 @@ class Pansharpener(AbstractWorkflowComponent):
 
     def invoke(self, context):
         """Invoke"""
+        # Set locking status, default to False
+        self.use_lock = context.get("use_lock", False)
+        self.logger.debug("Locking is used in pansharpener: %s",
+                          str(self.use_lock))
+        if self.use_lock:
+            self.logger.debug("Pansharpener acquires lock of previous "
+                              "worker: %s", str(context["prev_lock"]))
+            utils.acquire_lock(context["prev_lock"])
+
         glbl = context["content"]
         # Read list of channels to be sharpened
         pan_chans = context["pan_sharpen_chans"]
@@ -44,6 +55,22 @@ class Pansharpener(AbstractWorkflowComponent):
 
         # Put enhanced data to output queue
         context["output_queue"].put(glbl)
+
+        if utils.release_locks([context["lock"]]):
+            self.logger.debug("Pansharpener releases own lock %s",
+                              str(context["lock"]))
+            time.sleep(1)
+
+        # Wait until the lock has been released downstream
+        if self.use_lock:
+            utils.acquire_lock(context["lock"])
+            utils.release_locks([context["lock"]])
+
+        # After all the items have been processed, release the lock for
+        # the previous step
+        utils.release_locks([context["prev_lock"]], log=self.logger.debug,
+                            log_msg="Pansharpener releases lock of " +
+                            "previous worker")
 
     def post_invoke(self):
         """Post-invoke"""
