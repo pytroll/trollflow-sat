@@ -1,6 +1,59 @@
 Changelog
 =========
 
+v0.6.0 (2017-03-28)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.5.1 → 0.6.0. [Panu Lahtinen]
+
+- Wrap a long line. [Panu Lahtinen]
+
+- Add locking functionality to enhance.Pansharpener. [Panu Lahtinen]
+
+- Fix import, fix name of area defs in scene info dictionary. [Panu
+  Lahtinen]
+
+- Add minimal product config. [Panu Lahtinen]
+
+- Add _template to filenames. [Panu Lahtinen]
+
+- Rename example config. [Panu Lahtinen]
+
+- Set save_settings to empty dict if no settings are given. [Panu
+  Lahtinen]
+
+- Add minimal config example. [Panu Lahtinen]
+
+- Add coverage module. [Panu Lahtinen]
+
+- Add plugin to check coverage. [Panu Lahtinen]
+
+  This plugin removes areas from production if the data doesn't cover the
+  area well enough.
+
+
+- Reflow overlong line. [Panu Lahtinen]
+
+- Add raised error message to log. [Panu Lahtinen]
+
+- Import trollflow_sat.utils instead of trollflow.utils. [Panu Lahtinen]
+
+- Fix typo in call to release_locks() [Panu Lahtinen]
+
+- Fix incorrect call to release_locks() [Panu Lahtinen]
+
+- Fix typo in function call. [Panu Lahtinen]
+
+- Fix typo. [Panu Lahtinen]
+
+- Add TypeError to catched errors. [Panu Lahtinen]
+
+- Pass full message, not only message data. [Panu Lahtinen]
+
+- Add missing kwarg. [Panu Lahtinen]
+
 v0.5.1 (2017-03-21)
 -------------------
 
