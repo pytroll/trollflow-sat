@@ -179,7 +179,8 @@ class DataWriter(Thread):
                     # After all the items have been processed, release the
                     # lock for the previous worker
                     if self.prev_lock is not None:
-                        utils.release_locks([self.prev_lock], self.logger.debug,
+                        utils.release_locks([self.prev_lock],
+                                            self.logger.debug,
                                             "Writer releses lock of "
                                             "previous worker: %s" %
                                             str(self.prev_lock))
