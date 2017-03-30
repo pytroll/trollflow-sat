@@ -47,6 +47,7 @@ class CoverageCheck(AbstractWorkflowComponent):
                 self.logger.warning("No minimum coverage given, "
                                     "assuming 0 % coverage needed")
                 areas.append(area_name)
+                continue
 
             if covers(overpass, area_name, min_coverage, self.logger):
                 areas.append(area_name)
