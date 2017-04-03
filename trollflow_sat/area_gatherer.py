@@ -46,6 +46,14 @@ class AreaGathererContainer(object):
     def __setstate__(self, state):
         self.__init__(**state)
 
+    def restart(self):
+        '''Restart writer after configuration update.
+        '''
+        if self.gatherer is not None:
+            if self.gatherer.loop:
+                self.stop()
+        self.__init__()
+
     def stop(self):
         """Stop gatherer."""
         self.logger.debug("Stopping AreaGatherer.")
@@ -53,6 +61,10 @@ class AreaGathererContainer(object):
         self.thread.join()
         self.logger.debug("AreaGatherer stopped.")
         self.thread = None
+
+    def is_alive(self):
+        """Return the thread status"""
+        return self.thread.is_alive()
 
 
 class AreaGatherer(Thread):
