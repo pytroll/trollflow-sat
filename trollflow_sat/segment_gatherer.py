@@ -54,6 +54,14 @@ class SegmentGathererContainer(object):
     def __setstate__(self, state):
         self.__init__(**state)
 
+    def restart(self):
+        '''Restart writer after configuration update.
+        '''
+        if self.gatherer is not None:
+            if self.gatherer.loop:
+                self.stop()
+        self.__init__()
+
     def stop(self):
         """Stop gatherer."""
         self.logger.debug("Stopping SegmentGatherer.")
@@ -61,6 +69,10 @@ class SegmentGathererContainer(object):
         self.thread.join()
         self.logger.debug("SegmentGatherer stopped.")
         self.thread = None
+
+    def is_alive(self):
+        """Return the thread status"""
+        return self.thread.is_alive()
 
 
 class SegmentGatherer(Thread):
@@ -94,8 +106,6 @@ class SegmentGatherer(Thread):
         self.slots = OrderedDict()
 
         self.time_name = self._config["config"]["time_name"]
-
-        self.logger = logging.getLogger("SegmentGatherer")
 
     def _clear_data(self, time_slot):
         """Clear data."""
