@@ -17,6 +17,7 @@ class DataWriterContainer(object):
     '''
 
     logger = logging.getLogger("DataWriterContainer")
+    _prev_lock = None
 
     def __init__(self, topic=None, port=0, nameservers=None,
                  save_settings=None, use_lock=False):
@@ -24,7 +25,6 @@ class DataWriterContainer(object):
         self._input_queue = None
         self.output_queue = None  # Queue.Queue()
         self.thread = None
-        self._prev_lock = None
         self.use_lock = use_lock
 
         # Create a Writer instance
@@ -80,6 +80,10 @@ class DataWriterContainer(object):
         self.thread.join()
         self.logger.debug("Writer stopped.")
         self.thread = None
+
+    def is_alive(self):
+        """Return the thread status"""
+        return self.thread.is_alive()
 
 
 class DataWriter(Thread):
