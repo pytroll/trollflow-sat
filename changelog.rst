@@ -1,6 +1,26 @@
 Changelog
 =========
 
+v0.7.0 (2017-04-04)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.6.0 → 0.7.0. [Panu Lahtinen]
+
+- Add restart() and is_alive() [Panu Lahtinen]
+
+- Add restart() and is_alive(), remove double setting of logger. [Panu
+  Lahtinen]
+
+- Move _prev_lock to class attribute, add is_alive() [Panu Lahtinen]
+
+- Move _prev_lock to class attribute, add self.is_alive() [Panu
+  Lahtinen]
+
+- Skip coverage calculation if min_coverage is not defined. [Panu
+  Lahtinen]
+
 v0.6.0 (2017-03-28)
 -------------------
 
