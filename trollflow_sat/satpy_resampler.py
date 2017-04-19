@@ -54,9 +54,9 @@ class Resampler(AbstractWorkflowComponent):
         try:
             area = glbl.info['area'].area_id
             area_config = product_config["product_list"][area]
-            kwargs['radius_of_influence'] =
-                area_config.get("srch_radius", context["radius"],
-                                10000.)
+            kwargs['radius_of_influence'] = area_config.get("srch_radius",
+                                                            context["radius"],
+                                                            10000.)
         except (AttributeError, KeyError):
             kwargs['radius_of_influence'] = 10000.
 
