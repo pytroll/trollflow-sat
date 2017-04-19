@@ -2,8 +2,9 @@
 Trollduction using satpy"""
 
 import logging
-import yaml
 import time
+
+import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
@@ -39,27 +40,21 @@ class Resampler(AbstractWorkflowComponent):
 
         # Handle config options
         kwargs = {}
-        try:
-            kwargs['precompute'] = context["precompute"]
-        except KeyError:
-            kwargs['precompute'] = False
+
+        kwargs['precompute'] = context.get('precompute', False)
         self.logger.debug("Setting precompute to %s",
                           str(kwargs['precompute']))
-        try:
-            kwargs['nprocs'] = context["nprocs"]
-        except KeyError:
-            kwargs['nprocs'] = 1
+
+        kwargs['nprocs'] = context.get('nprocs', 1)
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
-        try:
-            kwargs['resampler'] = context["proj_method"]
-        except KeyError:
-            kwargs['resampler'] = "nearest"
+
+        kwargs['resampler'] = context.get('proj_method', "nearest")
         self.logger.debug(
             "Using resampling method: '%s'.", kwargs['resampler'])
         try:
-            area = glbl.area.area_id
+            area = glbl.info['area'].area_id
             area_config = product_config["product_list"][area]
-            kwargs['radius_of_influence'] = \
+            kwargs['radius_of_influence'] =
                 area_config.get("srch_radius", context["radius"],
                                 10000.)
         except (AttributeError, KeyError):
@@ -78,13 +73,13 @@ class Resampler(AbstractWorkflowComponent):
                 self.logger.debug("Resampler acquires own lock %s",
                                   str(context["lock"]))
                 utils.acquire_lock(context["lock"])
-            if area_id not in glbl.info["areas"]:
-                utils.release_locks([context["lock"]])
-                continue
+            # if area_id not in glbl.info["areas"]:
+            #     utils.release_locks([context["lock"]])
+            #     continue
 
             # Reproject only needed channels
-            dataset_names = \
-                utils.get_satpy_area_composite_names(product_config, area_id)
+            dataset_names = utils.get_satpy_area_composite_names(
+                product_config, area_id)
             dataset_ids = [ds_id for ds_id in glbl.datasets.keys()
                            if ds_id.name in dataset_names]
             if area_id == "satproj":
