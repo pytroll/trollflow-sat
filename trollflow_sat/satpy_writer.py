@@ -184,7 +184,7 @@ class DataWriter(Thread):
                             except AttributeError:
                                 area_data = None
 
-                            to_send = {"nominal_time": info["time_slot"],
+                            to_send = {"nominal_time": info["start_time"],
                                        "uid": os.path.basename(fname),
                                        "uri": os.path.abspath(fname),
                                        "area": area_data,
