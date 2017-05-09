@@ -1,6 +1,32 @@
 Changelog
 =========
 
+v0.8.0 (2017-05-09)
+-------------------
+
+Fix
+~~~
+
+- Bugfix: use start_time instead of time_slot in satpy_writer. [Martin
+  Raspaud]
+
+Other
+~~~~~
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.7.0 → 0.8.0. [Panu Lahtinen]
+
+- Bugfix satpy resampler. [Martin Raspaud]
+
+- Fix satpy resampler for satpy syntax. [Martin Raspaud]
+
+- Bugfix in satpy compositor. [Martin Raspaud]
+
+- Add fetch plugin. [Martin Raspaud]
+
+- Fix PyYAML case as dependency in setup.cfg. [Martin Raspaud]
+
 v0.7.0 (2017-04-04)
 -------------------
 
