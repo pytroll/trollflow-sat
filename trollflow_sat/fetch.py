@@ -1,20 +1,94 @@
 """Classes for handling file fetching for Trollflow based Trollduction"""
 
 import logging
+import os
+import socket
 import time
 from tempfile import gettempdir
-from urlparse import urlsplit
+from urlparse import urlparse, urlsplit
+
+import netifaces
 
 from posttroll.message import Message
 from trollflow.utils import acquire_lock, release_lock
 from trollflow.workflow_component import AbstractWorkflowComponent
 
+logger = logging.getLogger(__name__)
+
+
+def get_local_ips():
+    inet_addrs = [netifaces.ifaddresses(iface).get(netifaces.AF_INET)
+                  for iface in netifaces.interfaces()]
+    ips = []
+    for addr in inet_addrs:
+        if addr is not None:
+            for add in addr:
+                ips.append(add['addr'])
+    return ips
+
+
+def is_uri_on_server(uri, strict=False):
+    """Check if the *uri* is designating a place on the server.
+
+    If *strict* is True, the hostname has to be specified in the *uri* for the
+    path to be considered valid.
+    """
+    url = urlparse(uri)
+    try:
+        url_ip = socket.gethostbyname(url.hostname)
+    except (socket.gaierror, TypeError):
+        if strict:
+            return False
+        try:
+            os.stat(url.path)
+        except OSError:
+            return False
+    else:
+        if url.hostname == '':
+            if strict:
+                return False
+            try:
+                os.stat(url.path)
+            except OSError:
+                return False
+        elif url_ip not in get_local_ips():
+            return False
+        else:
+            try:
+                os.stat(url.path)
+            except OSError:
+                return False
+    return True
+
+
+def check_uri(uri):
+    """Check that the provided *uri* is on the local host and return the
+    file path.
+    """
+    if isinstance(uri, (list, set, tuple)):
+        paths = [check_uri(ressource) for ressource in uri]
+        return paths
+    url = urlparse(uri)
+    try:
+        if url.hostname:
+            url_ip = socket.gethostbyname(url.hostname)
+
+            if url_ip not in get_local_ips():
+                try:
+                    os.stat(url.path)
+                except OSError:
+                    raise IOError(
+                        "Data file %s unaccessible from this host" % uri)
+
+    except socket.gaierror:
+        logger.warning("Couldn't check file location, running anyway")
+
+    return url.path
+
 
 class Fetcher(AbstractWorkflowComponent):
 
     """Fetch files from the network if needed, and sanitize the pathname."""
-
-    logger = logging.getLogger("Fetcher")
 
     def __init__(self):
         super(Fetcher, self).__init__()
@@ -78,9 +152,8 @@ def fetch_files(message, destination):
 
 def fetch_file(uri, destination):
     """Fetch a single file into `destination` and return its pathname."""
-    url = urlsplit(uri)
-    if url.scheme is None or url.scheme == 'file':
-        return url.path
-    else:
+    try:
+        return check_uri(uri)
+    except IOError:
         del destination
-        raise NotImplementedError("Don't know how to fetch over " + url.scheme)
+        raise NotImplementedError("Don't know how to fetch non local files")
