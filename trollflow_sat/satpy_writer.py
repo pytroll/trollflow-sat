@@ -1,12 +1,12 @@
 
-import Queue
-from threading import Thread
 import logging
-import time
 import os.path
+import Queue
+import time
+from threading import Thread
 
-from posttroll.publisher import Publish
 from posttroll.message import Message
+from posttroll.publisher import Publish
 from trollflow_sat import utils
 from trollsift import compose
 
@@ -172,7 +172,7 @@ class DataWriter(Thread):
 
                             self.logger.info("Saved %s", fname)
 
-                            area = lcl[prod].info["area"]
+                            area = lcl[prod].attrs["area"]
                             try:
                                 area_data = {"name": area.name,
                                              "area_id": area.area_id,
