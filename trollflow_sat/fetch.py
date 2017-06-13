@@ -101,21 +101,21 @@ class Fetcher(AbstractWorkflowComponent):
         """Invoke."""
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
-        self.logger.debug("Locking is used in Fetcher: %s",
-                          str(self.use_lock))
+        logger.debug("Locking is used in Fetcher: %s",
+                     str(self.use_lock))
         if self.use_lock:
-            self.logger.debug("Fetcher acquires lock of previous "
-                              "worker: %s", str(context["prev_lock"]))
+            logger.debug("Fetcher acquires lock of previous "
+                         "worker: %s", str(context["prev_lock"]))
             acquire_lock(context["prev_lock"])
 
-        self.logger.info("Fetching files.")
+        logger.info("Fetching files.")
         message = fetch_files(context["content"], context.get("destination",
                                                               gettempdir()))
         context["output_queue"].put(message)
 
         if self.use_lock:
-            self.logger.debug("Fetcher releases own lock %s",
-                              str(context["lock"]))
+            logger.debug("Fetcher releases own lock %s",
+                         str(context["lock"]))
             release_lock(context["lock"])
             # Wait 1 second to ensure next worker has time to acquire the
             # lock
@@ -128,7 +128,7 @@ class Fetcher(AbstractWorkflowComponent):
 
         # After all the items have been processed, release the lock for
         # the previous step
-        self.logger.debug("Fetcher releases lock of previous worker")
+        logger.debug("Fetcher releases lock of previous worker")
         release_lock(context["prev_lock"])
 
     def post_invoke(self):
