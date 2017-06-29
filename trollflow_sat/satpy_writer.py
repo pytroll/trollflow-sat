@@ -21,18 +21,25 @@ class DataWriterContainer(object):
 
     def __init__(self, topic=None, port=0, nameservers=None,
                  save_settings=None, use_lock=False):
+        # store parameters for later writer restarts
         self.topic = topic
         self._input_queue = None
         self.output_queue = None  # Queue.Queue()
         self.thread = None
         self.use_lock = use_lock
+        self._save_settings = save_settings
+        self._topic = topic
+        self._port = port
+        self._nameservers = nameservers
+        self._init_writer()
 
+    def _init_writer(self):
         # Create a Writer instance
         self.writer = DataWriter(queue=self.input_queue,
-                                 save_settings=save_settings,
-                                 topic=topic,
-                                 port=port,
-                                 nameservers=nameservers,
+                                 save_settings=self._save_settings,
+                                 topic=self._topic,
+                                 port=self._port,
+                                 nameservers=self._nameservers,
                                  prev_lock=self._prev_lock)
         # Start Writer instance into a new daemonized thread.
         self.thread = Thread(target=self.writer.run)
@@ -71,7 +78,7 @@ class DataWriterContainer(object):
         if self.writer is not None:
             if self.writer.loop:
                 self.stop()
-        self.__init__()
+        self._init_writer()
 
     def stop(self):
         '''Stop writer.'''
