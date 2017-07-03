@@ -170,11 +170,14 @@ class SceneLoader(AbstractWorkflowComponent):
         if not isinstance(filenames, (list, set, tuple)):
             filenames = [filenames]
 
+        reader = mda.get('reader') or None
+
         # Create satellite scene
         global_data = Scene(platform_name=platform_name,
                             sensor=sensor,
                             start_time=start_time,
                             end_time=end_time,
+			    reader=reader,
                             filenames=filenames)
 
         global_data.info.update(mda)
