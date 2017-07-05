@@ -179,7 +179,11 @@ class DataWriter(Thread):
 
                             self.logger.info("Saved %s", fname)
 
-                            area = lcl[prod].attrs["area"]
+                            try:
+                                area = lcl[prod].attrs["area"]
+                            except AttributeError:
+                                area = lcl[prod].info["area"]
+
                             try:
                                 area_data = {"name": area.name,
                                              "area_id": area.area_id,
