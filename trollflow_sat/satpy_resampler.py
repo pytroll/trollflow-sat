@@ -54,6 +54,7 @@ class Resampler(AbstractWorkflowComponent):
 
         prod_list = product_config["product_list"]
         for area_id in prod_list:
+            kwargs['radius_of_influence'] = None
             try:
                 area_config = product_config["product_list"][area_id]
                 kwargs['radius_of_influence'] = area_config.get("srch_radius",
