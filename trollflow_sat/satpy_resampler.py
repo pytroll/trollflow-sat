@@ -66,6 +66,12 @@ class Resampler(AbstractWorkflowComponent):
             self.logger.debug("Using search radius %d meters.",
                               int(kwargs['radius_of_influence']))
 
+        try:
+            kwargs['cache_dir'] = context['cache_dir']
+            self.logger.debug("Setting projection cache dir to %s", kwargs['cache_dir'])
+        except (AttributeError, KeyError):
+            pass
+        
         prod_list = product_config["product_list"]
         for area_id in prod_list:
             # Set lock if locking is used
