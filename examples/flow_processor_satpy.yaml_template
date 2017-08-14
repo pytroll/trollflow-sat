@@ -79,3 +79,5 @@ work:
             # the variable name in the received message.
             # publish_vars:
             #   gatherer_time: gatherer_time
+            # publish everything with
+			# publish_vars: "*"
