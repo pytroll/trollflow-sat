@@ -196,20 +196,25 @@ class DataWriter(Thread):
                             except AttributeError:
                                 area_data = None
 
-                            to_send = {"nominal_time": info["start_time"],
-                                       "uid": os.path.basename(fname),
-                                       "uri": os.path.abspath(fname),
-                                       "area": area_data,
-                                       "productname": info["productname"]
-                                       }
-                            
+                            to_send = dict(info) if '*' \
+                                in self._publish_vars else {}
+                                
                             for dest_key in self._publish_vars:
-                                if dest_key not in to_send:
+                                if dest_key != '*':
                                     to_send[dest_key] = info.get(
                                         self._publish_vars[dest_key]
                                         if
-                                        isinstance(self._publish_vars, dict) else
+                                        isinstance(self._publish_vars, dict)
+                                        else
                                         dest_key)
+                                    
+                            to_send_fix = {"nominal_time": info["start_time"],
+                                           "uid": os.path.basename(fname),
+                                           "uri": os.path.abspath(fname),
+                                           "area": area_data,
+                                           "productname": info["productname"]
+                                           }
+                            to_send.update(to_send_fix)
 
                             if self._topic is not None:
                                 topic = self._topic
