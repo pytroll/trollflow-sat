@@ -69,3 +69,15 @@ work:
             # By default writer doesn't lock the compositor, but that
             # can be done by setting use_lock to true
             # use_lock: true
+            #
+            # Writer publishes only a fixed set of variables
+            # in its posttroll message. If you want to forward
+            # attributes that were received from a previous
+            # processing stage, you can define a map called 
+            # publish_vars. The keys denote variable names in
+            # the message to be published. The value defines 
+            # the variable name in the received message.
+            # publish_vars:
+            #   gatherer_time: gatherer_time
+            # publish everything with
+			# publish_vars: "*"

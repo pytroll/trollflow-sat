@@ -20,7 +20,8 @@ class DataWriterContainer(object):
     _prev_lock = None
 
     def __init__(self, topic=None, port=0, nameservers=None,
-                 save_settings=None, use_lock=False):
+                 save_settings=None, use_lock=False,
+                 publish_vars=None):
         # store parameters for later writer restarts
         self.topic = topic
         self._input_queue = None
@@ -31,6 +32,7 @@ class DataWriterContainer(object):
         self._topic = topic
         self._port = port
         self._nameservers = nameservers
+        self._publish_vars = publish_vars
         self._init_writer()
 
     def _init_writer(self):
@@ -40,6 +42,7 @@ class DataWriterContainer(object):
                                  topic=self._topic,
                                  port=self._port,
                                  nameservers=self._nameservers,
+                                 publish_vars=self._publish_vars,
                                  prev_lock=self._prev_lock)
         # Start Writer instance into a new daemonized thread.
         self.thread = Thread(target=self.writer.run)
@@ -101,7 +104,8 @@ class DataWriter(Thread):
     logger = logging.getLogger("DataWriter")
 
     def __init__(self, queue=None, save_settings=None,
-                 topic=None, port=0, nameservers=None, prev_lock=None):
+                 topic=None, port=0, nameservers=None, prev_lock=None,
+                 publish_vars=None):
         Thread.__init__(self)
         self.queue = queue
         self._loop = False
@@ -115,6 +119,7 @@ class DataWriter(Thread):
             self._nameservers = nameservers
         self._topic = topic
         self.prev_lock = prev_lock
+        self._publish_vars = publish_vars or {}
 
     def run(self):
         """Run the thread."""
@@ -195,12 +200,25 @@ class DataWriter(Thread):
                             except AttributeError:
                                 area_data = None
 
-                            to_send = {"nominal_time": info["start_time"],
-                                       "uid": os.path.basename(fname),
-                                       "uri": os.path.abspath(fname),
-                                       "area": area_data,
-                                       "productname": info["productname"]
-                                       }
+                            to_send = dict(info) if '*' \
+                                in self._publish_vars else {}
+                                
+                            for dest_key in self._publish_vars:
+                                if dest_key != '*':
+                                    to_send[dest_key] = info.get(
+                                        self._publish_vars[dest_key]
+                                        if
+                                        isinstance(self._publish_vars, dict)
+                                        else
+                                        dest_key)
+                                    
+                            to_send_fix = {"nominal_time": info["start_time"],
+                                           "uid": os.path.basename(fname),
+                                           "uri": os.path.abspath(fname),
+                                           "area": area_data,
+                                           "productname": info["productname"]
+                                           }
+                            to_send.update(to_send_fix)
 
                             if self._topic is not None:
                                 topic = self._topic
