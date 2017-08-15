@@ -1,6 +1,94 @@
 Changelog
 =========
 
+%%version%% (unreleased)
+------------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Merge pull request #6 from ch-k/feature-publish-vars-param. [Panu
+  Lahtinen]
+
+  Satpy writer parameter to specify published values
+
+- Added sample to template. [Christian Kliche]
+
+- Configuration option to publish everything. [Christian Kliche]
+
+  Configuration of satpy_writer now supports "*" in parameter
+  "publish_vars".
+
+  Example 1:
+
+  publish_vars: "*"
+
+  Example 2:
+
+  publish_vars:
+    "*": ""
+    super_param: gatherer_time
+
+
+- Satpy writer parameter to specify published values. [Christian Kliche]
+
+  By default writer publishes only a fixed set of variables
+  in its posttroll message. If you want to forward attributes
+  that were received from a previous processing stage, you
+  can define a map called publish_vars. The keys denote variable
+  names in the message to be published. The value defines the
+  variable name in the received message.
+
+  publish_vars:
+    gatherer_time: gatherer_time
+
+  see example examples/flow_processor_satpy.yaml_template
+
+
+- Merge pull request #5 from ch-k/feature-param-proj-cache-dir. [Panu
+  Lahtinen]
+
+  Parameter cache_dir for satpy resampler
+
+- Parameter cache_dir for satpy resampler. [Christian Kliche]
+
+- Merge pull request #4 from ch-k/fix-satpy-resampler-radius. [Panu
+  Lahtinen]
+
+  Fix config of resampling radius in satpy_resampler
+
+- Reset 'radius_of_influence' at loop start. [Christian Kliche]
+
+- Fix config of resampling radius in satpy_resampler. [Christian Kliche]
+
+- Merge pull request #3 from ch-k/fix-non-xarray-dataset-attr. [Panu
+  Lahtinen]
+
+  Fix compatibility with satpy non-xarray branch
+
+- Fix compatibility with satpy non-xarray branch. [Christian Kliche]
+
+- Merge pull request #2 from ch-k/fix-writer-restart-params. [Panu
+  Lahtinen]
+
+  Fix writer restart with parameters
+
+- Fix writer restart with parameters. [Christian Kliche]
+
+- Merge pull request #1 from ch-k/feature-scene-reader-param. [Panu
+  Lahtinen]
+
+  Use metadata reader param for scene creation
+
+- Use metadata reader param for scene creation. [Christian Kliche]
+
+- Use the main logger from the fetch file. [Martin Raspaud]
+
+- Change setup.cfg's provides to reflect rpm name. [Martin Raspaud]
+
+- Adapt satpy_writer to xarray branch. [Martin Raspaud]
+
+- Check if file is local before fetching. [Martin Raspaud]
+
 v0.8.0 (2017-05-09)
 -------------------
 
