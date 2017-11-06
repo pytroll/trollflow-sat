@@ -2,12 +2,13 @@
 using satpy"""
 
 import logging
-import yaml
 import time
 
-from trollflow_sat import utils
-from trollflow.workflow_component import AbstractWorkflowComponent
+import yaml
+
 from satpy import Scene
+from trollflow.workflow_component import AbstractWorkflowComponent
+from trollflow_sat import utils
 
 
 class SceneLoader(AbstractWorkflowComponent):
@@ -173,12 +174,7 @@ class SceneLoader(AbstractWorkflowComponent):
         reader = mda.get('reader') or None
 
         # Create satellite scene
-        global_data = Scene(platform_name=platform_name,
-                            sensor=sensor,
-                            start_time=start_time,
-                            end_time=end_time,
-			    reader=reader,
-                            filenames=filenames)
+        global_data = Scene(filenames=filenames, reader=reader)
 
         global_data.info.update(mda)
 

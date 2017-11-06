@@ -1,16 +1,17 @@
-import os.path
 import logging
+import os.path
 
+from posttroll.message import Message
+from posttroll.publisher import Publish
+from trollflow.utils import acquire_lock as trollflow_acquire_lock
+from trollflow.utils import release_lock
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
+
 try:
     from pyorbital import astronomy
 except ImportError:
     astronomy = None
-from posttroll.publisher import Publish
-from posttroll.message import Message
-from trollflow.utils import release_lock
-from trollflow.utils import acquire_lock as trollflow_acquire_lock
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
