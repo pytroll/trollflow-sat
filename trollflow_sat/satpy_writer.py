@@ -158,7 +158,6 @@ class DataWriter(Thread):
                     info = lcl.info.copy()
                     product_config = lcl.info["product_config"]
                     products = lcl.info["products"]
-                    dataset_ids = lcl.info["dataset_ids"]
 
                     for i, prod in enumerate(products):
                         fnames, _ = utils.create_fnames(info,
@@ -177,7 +176,7 @@ class DataWriter(Thread):
                                 self.logger.info(
                                     "Saving %s with default writer", fname)
 
-                            lcl.save_dataset(dataset_ids[i],
+                            lcl.save_dataset(prod,
                                              filename=fname,
                                              writer=writers[j],
                                              **kwargs)
