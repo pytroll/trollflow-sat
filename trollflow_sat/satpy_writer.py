@@ -155,22 +155,15 @@ class DataWriter(Thread):
                         # After all the items have been processed, release the
                         # lock for the previous worker
                         continue
-<<<<<<< 8971269abef53980c0d0e6d78587f3a9a9240430
+<
                     try:
                         info = lcl.attrs.copy()
                         product_config = lcl.attrs["product_config"]
                         products = lcl.attrs["products"]
-                        dataset_ids = lcl.attrs["dataset_ids"]
                     except AttributeError:
                         info = lcl.info.copy()
                         product_config = lcl.info["product_config"]
                         products = lcl.info["products"]
-                        dataset_ids = lcl.info["dataset_ids"]
-=======
-                    info = lcl.info.copy()
-                    product_config = lcl.info["product_config"]
-                    products = lcl.info["products"]
->>>>>>> Remove dataset IDs from the scene info as unecessary
 
                     for i, prod in enumerate(products):
                         fnames, _ = utils.create_fnames(info,
