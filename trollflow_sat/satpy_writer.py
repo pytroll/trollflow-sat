@@ -202,7 +202,7 @@ class DataWriter(Thread):
 
                             to_send = dict(info) if '*' \
                                 in self._publish_vars else {}
-                                
+
                             for dest_key in self._publish_vars:
                                 if dest_key != '*':
                                     to_send[dest_key] = info.get(
@@ -211,7 +211,7 @@ class DataWriter(Thread):
                                         isinstance(self._publish_vars, dict)
                                         else
                                         dest_key)
-                                    
+
                             to_send_fix = {"nominal_time": info["start_time"],
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
@@ -228,7 +228,7 @@ class DataWriter(Thread):
                                     topic = compose(topic,
                                                     {'area_id': 'satproj'})
 
-                                msg = Message(self._topic, "file", to_send)
+                                msg = Message(topic, "file", to_send)
                                 pub.send(str(msg))
                                 self.logger.debug("Sent message: %s", str(msg))
 
