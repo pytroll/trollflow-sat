@@ -54,10 +54,11 @@ class Resampler(AbstractWorkflowComponent):
 
         try:
             kwargs['cache_dir'] = context['cache_dir']
-            self.logger.debug("Setting projection cache dir to %s", kwargs['cache_dir'])
+            self.logger.debug(
+                "Setting projection cache dir to %s", kwargs['cache_dir'])
         except (AttributeError, KeyError):
             pass
-        
+
         prod_list = product_config["product_list"]
         for area_id in prod_list:
             kwargs['radius_of_influence'] = None
@@ -67,7 +68,7 @@ class Resampler(AbstractWorkflowComponent):
                                                                 context["radius"])
             except (AttributeError, KeyError):
                 kwargs['radius_of_influence'] = 10000.
-    
+
             if kwargs['radius_of_influence'] is None:
                 self.logger.debug("Using default search radius.")
             else:
@@ -91,17 +92,25 @@ class Resampler(AbstractWorkflowComponent):
                 self.logger.info("Using satellite projection")
                 lcl = glbl
             else:
+                try:
+                    metadata = glbl.attrs
+                except AttributeError:
+                    metadata = glbl.info
                 self.logger.info("Resampling time slot %s to area %s",
-                                 glbl.info["start_time"], area_id)
+                                 metadata["start_time"], area_id)
                 lcl = glbl.resample(area_id, datasets=dataset_ids,
                                     **kwargs)
-            lcl.info["product_config"] = product_config
-            lcl.info["area_id"] = area_id
-            lcl.info["products"] = prod_list[area_id]['products']
-            lcl.info["dataset_ids"] = dataset_ids
+            try:
+                metadata = lcl.attrs
+            except AttributeError:
+                metadata = lcl.info
+            metadata["product_config"] = product_config
+            metadata["area_id"] = area_id
+            metadata["products"] = prod_list[area_id]['products']
+            metadata["dataset_ids"] = dataset_ids
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
-                              area_id, str(lcl.info["start_time"]))
+                              area_id, str(metadata["start_time"]))
             context["output_queue"].put(lcl)
             del lcl
             lcl = None
