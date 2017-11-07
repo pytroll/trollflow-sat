@@ -176,8 +176,11 @@ class SceneLoader(AbstractWorkflowComponent):
         # Create satellite scene
         global_data = Scene(filenames=filenames, reader=reader)
 
-        global_data.info.update(mda)
-
-        self.logger.debug("SCENE: %s", str(global_data.info))
+        try:
+            global_data.attrs.update(mda)
+            self.logger.debug("SCENE: %s", str(global_data.attrs))
+        except AttributeError:
+            global_data.info.update(mda)
+            self.logger.debug("SCENE: %s", str(global_data.info))
 
         return global_data
