@@ -234,7 +234,7 @@ class DataWriter(Thread):
                                     topic = compose(topic,
                                                     {'area_id': 'satproj'})
 
-                                msg = Message(self._topic, "file", to_send)
+                                msg = Message(topic, "file", to_send)
                                 pub.send(str(msg))
                                 self.logger.debug("Sent message: %s", str(msg))
 
