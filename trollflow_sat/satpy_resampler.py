@@ -83,15 +83,6 @@ class Resampler(AbstractWorkflowComponent):
             #     utils.release_locks([context["lock"]])
             #     continue
 
-            # Reproject only needed channels
-            dataset_names = utils.get_satpy_area_composite_names(
-                product_config, area_id)
-            dataset_ids = {ds_id for ds_id in glbl.datasets.keys()
-                           if ds_id.name in dataset_names}
-            composite_ids = {ds_id for ds_id in glbl.available_composite_ids()
-                             if ds_id.name in dataset_names}
-            dataset_ids = list(dataset_ids.union(composite_ids))
-
             if area_id == "satproj":
                 self.logger.info("Using satellite projection")
                 lcl = glbl
@@ -110,7 +101,7 @@ class Resampler(AbstractWorkflowComponent):
             metadata["product_config"] = product_config
             metadata["area_id"] = area_id
             metadata["products"] = prod_list[area_id]['products']
-            metadata["dataset_ids"] = dataset_ids
+
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
                               area_id, str(metadata["start_time"]))
