@@ -86,8 +86,12 @@ class Resampler(AbstractWorkflowComponent):
             # Reproject only needed channels
             dataset_names = utils.get_satpy_area_composite_names(
                 product_config, area_id)
-            dataset_ids = [ds_id for ds_id in glbl.datasets.keys()
-                           if ds_id.name in dataset_names]
+            dataset_ids = {ds_id for ds_id in glbl.datasets.keys()
+                           if ds_id.name in dataset_names}
+            composite_ids = {ds_id for ds_id in glbl.available_composite_ids()
+                             if ds_id.name in dataset_names}
+            dataset_ids = list(dataset_ids.union(composite_ids))
+
             if area_id == "satproj":
                 self.logger.info("Using satellite projection")
                 lcl = glbl
@@ -98,8 +102,7 @@ class Resampler(AbstractWorkflowComponent):
                     metadata = glbl.info
                 self.logger.info("Resampling time slot %s to area %s",
                                  metadata["start_time"], area_id)
-                lcl = glbl.resample(area_id, datasets=dataset_ids,
-                                    **kwargs)
+                lcl = glbl.resample(area_id, **kwargs)
             try:
                 metadata = lcl.attrs
             except AttributeError:
