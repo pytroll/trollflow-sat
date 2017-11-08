@@ -106,7 +106,7 @@ class Resampler(AbstractWorkflowComponent):
                 metadata = lcl.info
             metadata["product_config"] = product_config
             metadata["area_id"] = area_id
-            metadata["products"] = prod_list[area_id]['products']
+            metadata["products"] = glbl.info["products"]
             metadata["dataset_ids"] = dataset_ids
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
