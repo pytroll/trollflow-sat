@@ -8,6 +8,7 @@ import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
+from trollsched.satpass import Pass
 
 
 class Resampler(AbstractWorkflowComponent):
@@ -60,7 +61,16 @@ class Resampler(AbstractWorkflowComponent):
             pass
 
         prod_list = product_config["product_list"]
+
+        # Overpass for coverage calculations
+        overpass = Pass(platform_name, start_time, end_time, instrument=sensor)
+
         for area_id in prod_list:
+            # Check for area coverage
+            min_coverage = prod_list[area_id].get("min_coverage", 0.0)
+            if not utils.covers(overpass, area_id, min_coverage, self.logger):
+                continue
+
             kwargs['radius_of_influence'] = None
             try:
                 area_config = product_config["product_list"][area_id]
