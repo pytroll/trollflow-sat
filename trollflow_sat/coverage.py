@@ -5,7 +5,6 @@ import time
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from mpop.projector import get_area_def
 from trollsched.satpass import Pass
 
 
@@ -49,7 +48,7 @@ class CoverageCheck(AbstractWorkflowComponent):
                 areas.append(area_name)
                 continue
 
-            if covers(overpass, area_name, min_coverage, self.logger):
+            if utils.covers(overpass, area_name, min_coverage, self.logger):
                 areas.append(area_name)
             else:
                 self.logger.info("Area coverage too low, skipping %s",
@@ -81,26 +80,3 @@ class CoverageCheck(AbstractWorkflowComponent):
     def post_invoke(self):
         """Post-invoke"""
         pass
-
-
-def covers(overpass, area_name, min_coverage, logger):
-    try:
-        area_def = get_area_def(area_name)
-        if min_coverage == 0 or overpass is None:
-            return True
-        min_coverage /= 100.0
-        coverage = overpass.area_coverage(area_def)
-        if coverage <= min_coverage:
-            logger.info("Coverage too small %.1f%% (out of %.1f%%) "
-                        "with %s",
-                        coverage * 100, min_coverage * 100,
-                        area_name)
-            return False
-        else:
-            logger.info("Coverage %.1f%% with %s",
-                        coverage * 100, area_name)
-
-    except AttributeError:
-        logger.warning("Can't compute area coverage with %s!",
-                       area_name)
-    return True

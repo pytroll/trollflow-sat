@@ -7,6 +7,10 @@ from trollflow.utils import acquire_lock as trollflow_acquire_lock
 from trollflow.utils import release_lock
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
+try:
+    from satpy.resample import get_area_def
+except ImportError:
+    from mpop.projector import get_area_def
 
 try:
     from pyorbital import astronomy
@@ -276,3 +280,26 @@ def release_locks(locks, log=None, log_msg=None):
 def acquire_lock(lock):
     """Acquire the given lock"""
     return trollflow_acquire_lock(lock)
+
+
+def covers(overpass, area_name, min_coverage, logger):
+    try:
+        area_def = get_area_def(area_name)
+        if min_coverage == 0 or overpass is None:
+            return True
+        min_coverage /= 100.0
+        coverage = overpass.area_coverage(area_def)
+        if coverage <= min_coverage:
+            logger.info("Coverage too small %.1f%% (out of %.1f%%) "
+                        "with %s",
+                        coverage * 100, min_coverage * 100,
+                        area_name)
+            return False
+        else:
+            logger.info("Coverage %.1f%% with %s",
+                        coverage * 100, area_name)
+
+    except AttributeError:
+        logger.warning("Can't compute area coverage with %s!",
+                       area_name)
+    return True
