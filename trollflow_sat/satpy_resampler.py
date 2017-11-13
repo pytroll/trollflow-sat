@@ -66,7 +66,7 @@ class Resampler(AbstractWorkflowComponent):
         overpass = Pass(glbl.info['platform_name'],
                         glbl.info['start_time'],
                         glbl.info['end_time'],
-                        instrument=glbl.info[sensor][0])
+                        instrument=glbl.info['sensor'][0])
 
         for area_id in prod_list:
             # Check for area coverage
