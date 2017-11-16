@@ -43,8 +43,9 @@ class Resampler(AbstractWorkflowComponent):
         kwargs = {}
 
         kwargs['precompute'] = context.get('precompute', False)
-        self.logger.debug("Setting precompute to %s",
-                          str(kwargs['precompute']))
+        kwargs['mask_area'] = context.get('mask_area', True)
+        self.logger.debug("Setting precompute to %s and masking to %s",
+                          str(kwargs['precompute']), str(kwargs['mask_area']))
 
         kwargs['nprocs'] = context.get('nprocs', 1)
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
