@@ -43,7 +43,16 @@ work:
         - trollflow_sat.satpy_resampler.Resampler:
             # Use "null" instead of "None"
             radius: null
+            # Save resampling LUTs?
             precompute: True
+            # Save directory for resampling LUTs.  Has effect only if
+            # precompute is True.  Defaults to /var/tmp/
+            cache_dir: /var/tmp/
+            # Use data mask when calculating resampling (True, default), or use
+            # un-masked coordinates (False).  The latter saves computation
+            # time, but may leave holes in the data that might be filled
+            # otherwise.
+            mask_area: False
             nprocs: 2
             proj_method: nearest
             product_list: *product_list
