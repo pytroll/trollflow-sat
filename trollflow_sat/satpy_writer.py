@@ -155,10 +155,16 @@ class DataWriter(Thread):
                         # After all the items have been processed, release the
                         # lock for the previous worker
                         continue
-                    info = lcl.info.copy()
-                    product_config = lcl.info["product_config"]
-                    products = lcl.info["products"]
-                    dataset_ids = lcl.info["dataset_ids"]
+                    try:
+                        info = lcl.attrs.copy()
+                        product_config = lcl.attrs["product_config"]
+                        products = lcl.attrs["products"]
+                        dataset_ids = lcl.attrs["dataset_ids"]
+                    except AttributeError:
+                        info = lcl.info.copy()
+                        product_config = lcl.info["product_config"]
+                        products = lcl.info["products"]
+                        dataset_ids = lcl.info["dataset_ids"]
 
                     for i, prod in enumerate(products):
                         fnames, _ = utils.create_fnames(info,
@@ -202,7 +208,7 @@ class DataWriter(Thread):
 
                             to_send = dict(info) if '*' \
                                 in self._publish_vars else {}
-                                
+
                             for dest_key in self._publish_vars:
                                 if dest_key != '*':
                                     to_send[dest_key] = info.get(
@@ -211,7 +217,7 @@ class DataWriter(Thread):
                                         isinstance(self._publish_vars, dict)
                                         else
                                         dest_key)
-                                    
+
                             to_send_fix = {"nominal_time": info["start_time"],
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
