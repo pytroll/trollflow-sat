@@ -17,6 +17,9 @@ groups:
 product_list:
   euron1:
     areaname: euron1
+    # Optional coverage check, defaults to 0.0 if not given, that is,
+    # all overpasses are processed
+    # min_coverage: 30.0
     products:
       overview:
         productname: overview

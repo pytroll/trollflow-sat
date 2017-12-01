@@ -8,6 +8,7 @@ import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
+from trollsched.satpass import Pass
 
 
 class Resampler(AbstractWorkflowComponent):
@@ -49,23 +50,35 @@ class Resampler(AbstractWorkflowComponent):
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
 
         kwargs['resampler'] = context.get('proj_method', "nearest")
-        self.logger.debug(
-            "Using resampling method: '%s'.", kwargs['resampler'])
+        self.logger.debug("Using resampling method: '%s'.",
+                          kwargs['resampler'])
 
         try:
             kwargs['cache_dir'] = context['cache_dir']
-            self.logger.debug(
-                "Setting projection cache dir to %s", kwargs['cache_dir'])
+            self.logger.debug("Setting projection cache dir to %s",
+                              kwargs['cache_dir'])
         except (AttributeError, KeyError):
             pass
 
         prod_list = product_config["product_list"]
+
+        # Overpass for coverage calculations
+        overpass = Pass(glbl.info['platform_name'],
+                        glbl.info['start_time'],
+                        glbl.info['end_time'],
+                        instrument=glbl.info['sensor'][0])
+
         for area_id in prod_list:
+            # Check for area coverage
+            min_coverage = prod_list[area_id].get("min_coverage", 0.0)
+            if not utils.covers(overpass, area_id, min_coverage, self.logger):
+                continue
+
             kwargs['radius_of_influence'] = None
             try:
                 area_config = product_config["product_list"][area_id]
-                kwargs['radius_of_influence'] = area_config.get("srch_radius",
-                                                                context["radius"])
+                kwargs['radius_of_influence'] = \
+                    area_config.get("srch_radius", context["radius"])
             except (AttributeError, KeyError):
                 kwargs['radius_of_influence'] = 10000.
 
