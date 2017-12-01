@@ -43,8 +43,9 @@ class Resampler(AbstractWorkflowComponent):
         kwargs = {}
 
         kwargs['precompute'] = context.get('precompute', False)
-        self.logger.debug("Setting precompute to %s",
-                          str(kwargs['precompute']))
+        kwargs['mask_area'] = context.get('mask_area', True)
+        self.logger.debug("Setting precompute to %s and masking to %s",
+                          str(kwargs['precompute']), str(kwargs['mask_area']))
 
         kwargs['nprocs'] = context.get('nprocs', 1)
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
@@ -96,11 +97,6 @@ class Resampler(AbstractWorkflowComponent):
             #     utils.release_locks([context["lock"]])
             #     continue
 
-            # Reproject only needed channels
-            dataset_names = utils.get_satpy_area_composite_names(
-                product_config, area_id)
-            dataset_ids = [ds_id for ds_id in glbl.datasets.keys()
-                           if ds_id.name in dataset_names]
             if area_id == "satproj":
                 self.logger.info("Using satellite projection")
                 lcl = glbl
@@ -111,16 +107,15 @@ class Resampler(AbstractWorkflowComponent):
                     metadata = glbl.info
                 self.logger.info("Resampling time slot %s to area %s",
                                  metadata["start_time"], area_id)
-                lcl = glbl.resample(area_id, datasets=dataset_ids,
-                                    **kwargs)
+                lcl = glbl.resample(area_id, **kwargs)
             try:
                 metadata = lcl.attrs
             except AttributeError:
                 metadata = lcl.info
             metadata["product_config"] = product_config
             metadata["area_id"] = area_id
-            metadata["products"] = glbl.info["products"]
-            metadata["dataset_ids"] = dataset_ids
+            metadata["products"] = prod_list[area_id]['products']
+
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
                               area_id, str(metadata["start_time"]))
