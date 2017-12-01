@@ -155,7 +155,7 @@ class DataWriter(Thread):
                         # After all the items have been processed, release the
                         # lock for the previous worker
                         continue
-<
+
                     try:
                         info = lcl.attrs.copy()
                         product_config = lcl.attrs["product_config"]
