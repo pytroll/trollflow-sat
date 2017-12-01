@@ -86,8 +86,23 @@ class SceneLoader(AbstractWorkflowComponent):
                                         "area, skipping")
                     continue
 
-            composites = utils.get_satpy_group_composite_names(product_config,
-                                                               group)
+            all_composites = \
+                utils.get_satpy_group_composite_names(product_config,
+                                                      group)
+
+            # Check solar elevations and remove those composites that
+            # are outside of their specified ranges
+            composites = set()
+            for composite in all_composites:
+                if utils.bad_sunzen_range_satpy(
+                        product_config,
+                        group, composite,
+                        global_data.info['start_time']):
+                    self.logger.info("Removing composite '%s'; out of "
+                                     "valid solar angle range", composite)
+                else:
+                    composites.add(composite)
+
             prev_reqs = {itm.name for itm in global_data.datasets}
             reqs_to_unload = prev_reqs - composites
             if len(reqs_to_unload) > 0:
@@ -99,6 +114,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
             # use_extern_calib=use_extern_calib
             global_data.load(composites)
+            global_data.info["products"] = composites
             context["output_queue"].put(global_data)
 
             if utils.release_locks([context["lock"]]):

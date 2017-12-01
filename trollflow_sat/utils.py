@@ -155,6 +155,54 @@ def find_time_name(info):
     return None
 
 
+def bad_sunzen_range_satpy(product_config, group, composite, start_time):
+    """Check if Sun zenith angle is valid at the configured location.
+    SatPy version.
+    TODO: refactor with bad_sunzen_range()
+    """
+    # FIXME: check all areas within the group
+    area_id = product_config['groups'][group][0]
+    product_conf = \
+        product_config["product_list"][area_id]["products"][composite]
+
+    if ("sunzen_night_minimum" not in product_conf and
+            "sunzen_day_maximum" not in product_conf):
+        return False
+
+    if astronomy is None:
+        LOGGER.warning("Pyorbital not installed, unable to calculate "
+                       "Sun zenith angles!")
+        return False
+
+    if "sunzen_lon" not in product_conf and "sunzen_lat" not in product_conf:
+        LOGGER.warning("No 'sunzen_lon' or 'sunzen_lat' configured, "
+                       "can\'t check Sun elevation.")
+        return False
+
+    lon = product_conf["sunzen_lon"]
+    lat = product_conf["sunzen_lat"]
+    sunzen = astronomy.sun_zenith_angle(start_time, lon, lat)
+    LOGGER.debug("Sun zenith angle is %.2f degrees", sunzen)
+
+    try:
+        limit = product_conf["sunzen_night_minimum"]
+        if sunzen < limit:
+            return True
+        else:
+            return False
+    except KeyError:
+        pass
+
+    try:
+        limit = product_conf["sunzen_day_maximum"]
+        if sunzen > limit:
+            return True
+        else:
+            return False
+    except KeyError:
+        pass
+
+
 def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
     """Check if Sun zenith angle is valid at the configured location."""
     product_conf = product_config["product_list"][area_id]["products"][prod]
