@@ -155,12 +155,23 @@ class DataWriter(Thread):
                         # After all the items have been processed, release the
                         # lock for the previous worker
                         continue
-                    info = lcl.info.copy()
-                    product_config = lcl.info["product_config"]
-                    products = lcl.info["products"]
-                    dataset_ids = lcl.info["dataset_ids"]
+
+                    try:
+                        info = lcl.attrs.copy()
+                        product_config = lcl.attrs["product_config"]
+                        products = lcl.attrs["products"]
+                    except AttributeError:
+                        info = lcl.info.copy()
+                        product_config = lcl.info["product_config"]
+                        products = lcl.info["products"]
+
+                    # Available composite names
+                    composite_names = [dset.name for dset in lcl.keys()]
 
                     for i, prod in enumerate(products):
+                        # Skip the removed composites
+                        if prod not in composite_names:
+                            continue
                         fnames, _ = utils.create_fnames(info,
                                                         product_config,
                                                         prod)
@@ -177,7 +188,7 @@ class DataWriter(Thread):
                                 self.logger.info(
                                     "Saving %s with default writer", fname)
 
-                            lcl.save_dataset(dataset_ids[i],
+                            lcl.save_dataset(prod,
                                              filename=fname,
                                              writer=writers[j],
                                              **kwargs)
@@ -185,9 +196,9 @@ class DataWriter(Thread):
                             self.logger.info("Saved %s", fname)
 
                             try:
-                                area = lcl[prod].attrs["area"]
+                                area = lcl[prod].attrs.get("area")
                             except AttributeError:
-                                area = lcl[prod].info["area"]
+                                area = lcl[prod].info.get("area")
 
                             try:
                                 area_data = {"name": area.name,
@@ -202,7 +213,7 @@ class DataWriter(Thread):
 
                             to_send = dict(info) if '*' \
                                 in self._publish_vars else {}
-                                
+
                             for dest_key in self._publish_vars:
                                 if dest_key != '*':
                                     to_send[dest_key] = info.get(
@@ -211,7 +222,7 @@ class DataWriter(Thread):
                                         isinstance(self._publish_vars, dict)
                                         else
                                         dest_key)
-                                    
+
                             to_send_fix = {"nominal_time": info["start_time"],
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
@@ -228,7 +239,7 @@ class DataWriter(Thread):
                                     topic = compose(topic,
                                                     {'area_id': 'satproj'})
 
-                                msg = Message(self._topic, "file", to_send)
+                                msg = Message(topic, "file", to_send)
                                 pub.send(str(msg))
                                 self.logger.debug("Sent message: %s", str(msg))
 

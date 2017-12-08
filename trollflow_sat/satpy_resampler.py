@@ -8,6 +8,7 @@ import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
+from trollsched.satpass import Pass
 
 
 class Resampler(AbstractWorkflowComponent):
@@ -42,32 +43,46 @@ class Resampler(AbstractWorkflowComponent):
         kwargs = {}
 
         kwargs['precompute'] = context.get('precompute', False)
-        self.logger.debug("Setting precompute to %s",
-                          str(kwargs['precompute']))
+        kwargs['mask_area'] = context.get('mask_area', True)
+        self.logger.debug("Setting precompute to %s and masking to %s",
+                          str(kwargs['precompute']), str(kwargs['mask_area']))
 
         kwargs['nprocs'] = context.get('nprocs', 1)
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
 
         kwargs['resampler'] = context.get('proj_method', "nearest")
-        self.logger.debug(
-            "Using resampling method: '%s'.", kwargs['resampler'])
+        self.logger.debug("Using resampling method: '%s'.",
+                          kwargs['resampler'])
 
         try:
             kwargs['cache_dir'] = context['cache_dir']
-            self.logger.debug("Setting projection cache dir to %s", kwargs['cache_dir'])
+            self.logger.debug("Setting projection cache dir to %s",
+                              kwargs['cache_dir'])
         except (AttributeError, KeyError):
             pass
-        
+
         prod_list = product_config["product_list"]
+
+        # Overpass for coverage calculations
+        overpass = Pass(glbl.info['platform_name'],
+                        glbl.info['start_time'],
+                        glbl.info['end_time'],
+                        instrument=glbl.info['sensor'][0])
+
         for area_id in prod_list:
+            # Check for area coverage
+            min_coverage = prod_list[area_id].get("min_coverage", 0.0)
+            if not utils.covers(overpass, area_id, min_coverage, self.logger):
+                continue
+
             kwargs['radius_of_influence'] = None
             try:
                 area_config = product_config["product_list"][area_id]
-                kwargs['radius_of_influence'] = area_config.get("srch_radius",
-                                                                context["radius"])
+                kwargs['radius_of_influence'] = \
+                    area_config.get("srch_radius", context["radius"])
             except (AttributeError, KeyError):
                 kwargs['radius_of_influence'] = 10000.
-    
+
             if kwargs['radius_of_influence'] is None:
                 self.logger.debug("Using default search radius.")
             else:
@@ -82,26 +97,28 @@ class Resampler(AbstractWorkflowComponent):
             #     utils.release_locks([context["lock"]])
             #     continue
 
-            # Reproject only needed channels
-            dataset_names = utils.get_satpy_area_composite_names(
-                product_config, area_id)
-            dataset_ids = [ds_id for ds_id in glbl.datasets.keys()
-                           if ds_id.name in dataset_names]
             if area_id == "satproj":
                 self.logger.info("Using satellite projection")
                 lcl = glbl
             else:
+                try:
+                    metadata = glbl.attrs
+                except AttributeError:
+                    metadata = glbl.info
                 self.logger.info("Resampling time slot %s to area %s",
-                                 glbl.info["start_time"], area_id)
-                lcl = glbl.resample(area_id, datasets=dataset_ids,
-                                    **kwargs)
-            lcl.info["product_config"] = product_config
-            lcl.info["area_id"] = area_id
-            lcl.info["products"] = prod_list[area_id]['products']
-            lcl.info["dataset_ids"] = dataset_ids
+                                 metadata["start_time"], area_id)
+                lcl = glbl.resample(area_id, **kwargs)
+            try:
+                metadata = lcl.attrs
+            except AttributeError:
+                metadata = lcl.info
+            metadata["product_config"] = product_config
+            metadata["area_id"] = area_id
+            metadata["products"] = prod_list[area_id]['products']
+
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
-                              area_id, str(lcl.info["start_time"]))
+                              area_id, str(metadata["start_time"]))
             context["output_queue"].put(lcl)
             del lcl
             lcl = None

@@ -2,12 +2,13 @@
 using satpy"""
 
 import logging
-import yaml
 import time
 
-from trollflow_sat import utils
-from trollflow.workflow_component import AbstractWorkflowComponent
+import yaml
+
 from satpy import Scene
+from trollflow.workflow_component import AbstractWorkflowComponent
+from trollflow_sat import utils
 
 
 class SceneLoader(AbstractWorkflowComponent):
@@ -85,8 +86,23 @@ class SceneLoader(AbstractWorkflowComponent):
                                         "area, skipping")
                     continue
 
-            composites = utils.get_satpy_group_composite_names(product_config,
-                                                               group)
+            all_composites = \
+                utils.get_satpy_group_composite_names(product_config,
+                                                      group)
+
+            # Check solar elevations and remove those composites that
+            # are outside of their specified ranges
+            composites = set()
+            for composite in all_composites:
+                if utils.bad_sunzen_range_satpy(
+                        product_config,
+                        group, composite,
+                        global_data.info['start_time']):
+                    self.logger.info("Removing composite '%s'; out of "
+                                     "valid solar angle range", composite)
+                else:
+                    composites.add(composite)
+
             prev_reqs = {itm.name for itm in global_data.datasets}
             reqs_to_unload = prev_reqs - composites
             if len(reqs_to_unload) > 0:
@@ -98,6 +114,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
             # use_extern_calib=use_extern_calib
             global_data.load(composites)
+            global_data.info["products"] = composites
             context["output_queue"].put(global_data)
 
             if utils.release_locks([context["lock"]]):
@@ -173,15 +190,13 @@ class SceneLoader(AbstractWorkflowComponent):
         reader = mda.get('reader') or None
 
         # Create satellite scene
-        global_data = Scene(platform_name=platform_name,
-                            sensor=sensor,
-                            start_time=start_time,
-                            end_time=end_time,
-			    reader=reader,
-                            filenames=filenames)
+        global_data = Scene(filenames=filenames, reader=reader)
 
-        global_data.info.update(mda)
-
-        self.logger.debug("SCENE: %s", str(global_data.info))
+        try:
+            global_data.attrs.update(mda)
+            self.logger.debug("SCENE: %s", str(global_data.attrs))
+        except AttributeError:
+            global_data.info.update(mda)
+            self.logger.debug("SCENE: %s", str(global_data.info))
 
         return global_data

@@ -1,16 +1,21 @@
-import os.path
 import logging
+import os.path
 
+from posttroll.message import Message
+from posttroll.publisher import Publish
+from trollflow.utils import acquire_lock as trollflow_acquire_lock
+from trollflow.utils import release_lock
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
+try:
+    from satpy.resample import get_area_def
+except ImportError:
+    from mpop.projector import get_area_def
+
 try:
     from pyorbital import astronomy
 except ImportError:
     astronomy = None
-from posttroll.publisher import Publish
-from posttroll.message import Message
-from trollflow.utils import release_lock
-from trollflow.utils import acquire_lock as trollflow_acquire_lock
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
@@ -150,6 +155,54 @@ def find_time_name(info):
     return None
 
 
+def bad_sunzen_range_satpy(product_config, group, composite, start_time):
+    """Check if Sun zenith angle is valid at the configured location.
+    SatPy version.
+    TODO: refactor with bad_sunzen_range()
+    """
+    # FIXME: check all areas within the group
+    area_id = product_config['groups'][group][0]
+    product_conf = \
+        product_config["product_list"][area_id]["products"][composite]
+
+    if ("sunzen_night_minimum" not in product_conf and
+            "sunzen_day_maximum" not in product_conf):
+        return False
+
+    if astronomy is None:
+        LOGGER.warning("Pyorbital not installed, unable to calculate "
+                       "Sun zenith angles!")
+        return False
+
+    if "sunzen_lon" not in product_conf and "sunzen_lat" not in product_conf:
+        LOGGER.warning("No 'sunzen_lon' or 'sunzen_lat' configured, "
+                       "can\'t check Sun elevation.")
+        return False
+
+    lon = product_conf["sunzen_lon"]
+    lat = product_conf["sunzen_lat"]
+    sunzen = astronomy.sun_zenith_angle(start_time, lon, lat)
+    LOGGER.debug("Sun zenith angle is %.2f degrees", sunzen)
+
+    try:
+        limit = product_conf["sunzen_night_minimum"]
+        if sunzen < limit:
+            return True
+        else:
+            return False
+    except KeyError:
+        pass
+
+    try:
+        limit = product_conf["sunzen_day_maximum"]
+        if sunzen > limit:
+            return True
+        else:
+            return False
+    except KeyError:
+        pass
+
+
 def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
     """Check if Sun zenith angle is valid at the configured location."""
     product_conf = product_config["product_list"][area_id]["products"][prod]
@@ -275,3 +328,26 @@ def release_locks(locks, log=None, log_msg=None):
 def acquire_lock(lock):
     """Acquire the given lock"""
     return trollflow_acquire_lock(lock)
+
+
+def covers(overpass, area_name, min_coverage, logger):
+    try:
+        area_def = get_area_def(area_name)
+        if min_coverage == 0 or overpass is None:
+            return True
+        min_coverage /= 100.0
+        coverage = overpass.area_coverage(area_def)
+        if coverage <= min_coverage:
+            logger.info("Coverage too small %.1f%% (out of %.1f%%) "
+                        "with %s",
+                        coverage * 100, min_coverage * 100,
+                        area_name)
+            return False
+        else:
+            logger.info("Coverage %.1f%% with %s",
+                        coverage * 100, area_name)
+
+    except AttributeError:
+        logger.warning("Can't compute area coverage with %s!",
+                       area_name)
+    return True
