@@ -1,8 +1,121 @@
 Changelog
 =========
 
-%%version%% (unreleased)
-------------------------
+v0.9.0 (2017-12-08)
+-------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.8.0 → 0.9.0. [Panu Lahtinen]
+
+- Merge pull request #14 from pytroll/fix-saving-removed. [Panu
+  Lahtinen]
+
+  Avoid crashing when a composite has been removed
+
+- Check that the configure composite is still available in the Scene.
+  [Panu Lahtinen]
+
+- Merge pull request #9 from pytroll/fix-delayed. [Panu Lahtinen]
+
+  Fix processing of delayed datasets
+
+- Merge branch 'fix-delayed' of https://github.com/pytroll/trollflow-sat
+  into fix-delayed. [Panu Lahtinen]
+
+- Merge branch 'fix-delayed' of https://github.com/pytroll/trollflow-sat
+  into fix-delayed. [Panu Lahtinen]
+
+- Add mask_area kwarg, add comments. [Panu Lahtinen]
+
+- Expose "mask_area" kwarg. [Panu Lahtinen]
+
+- Remove dataset IDs from the scene info as unecessary. [Panu Lahtinen]
+
+- Fix handling of "delayed" datasets. [Panu Lahtinen]
+
+- Fix topic of message for new files. [Panu Lahtinen]
+
+- Add mask_area kwarg, add comments. [Panu Lahtinen]
+
+- Expose "mask_area" kwarg. [Panu Lahtinen]
+
+- Remove dataset IDs from the scene info as unecessary. [Panu Lahtinen]
+
+- Fix handling of "delayed" datasets. [Panu Lahtinen]
+
+- Fix topic of message for new files. [Panu Lahtinen]
+
+- Remove dataset IDs from the scene info as unecessary. [Panu Lahtinen]
+
+- Add mask_area kwarg, add comments. [Panu Lahtinen]
+
+- Expose "mask_area" kwarg. [Panu Lahtinen]
+
+- Remove dataset IDs from the scene info as unecessary. [Panu Lahtinen]
+
+- Fix handling of "delayed" datasets. [Panu Lahtinen]
+
+- Fix topic of message for new files. [Panu Lahtinen]
+
+- Merge pull request #11 from pytroll/add-satpy-sun-check. [Panu
+  Lahtinen]
+
+  Add a check for Sun zenith angle for Satpy plugins
+
+- Merge branch 'add-satpy-sun-check' of https://github.com/pytroll
+  /trollflow-sat into add-satpy-sun-check. [Panu Lahtinen]
+
+- Add check for solar zenith angles, don't create composites outside
+  their range. [Panu Lahtinen]
+
+- Add check for solar zenith angles, don't create composites outside
+  their range. [Panu Lahtinen]
+
+- Merge pull request #12 from pytroll/feature-satpy-coverage. [Panu
+  Lahtinen]
+
+  Add coverage calculations to SatPy plugins
+
+- Merge branch 'feature-satpy-coverage' of https://github.com/pytroll
+  /trollflow-sat into feature-satpy-coverage. [Panu Lahtinen]
+
+- Fix typo: sensor -> 'sensor' [Panu Lahtinen]
+
+- Fix call to Pass() with existing metadata. [Panu Lahtinen]
+
+- Add coverage config item. [Panu Lahtinen]
+
+- Add coverage check. [Panu Lahtinen]
+
+- Move covers() to utils.py. [Panu Lahtinen]
+
+- Fix typo: sensor -> 'sensor' [Panu Lahtinen]
+
+- Fix call to Pass() with existing metadata. [Panu Lahtinen]
+
+- Add coverage config item. [Panu Lahtinen]
+
+- Add coverage check. [Panu Lahtinen]
+
+- Move covers() to utils.py. [Panu Lahtinen]
+
+- Merge branch 'develop' of https://github.com/pytroll/trollflow-sat
+  into develop. [Panu Lahtinen]
+
+- Fix area missing in some datasets for satpy_writer. [Martin Raspaud]
+
+- Fix info -> attrs rename in satpy_writer. [Martin Raspaud]
+
+- Merge branch 'develop' of https://github.com/pytroll/trollflow-sat
+  into develop. [Panu Lahtinen]
+
+- Fix .attrs compatibility in satpy resampler. [Martin Raspaud]
+
+- Add .attrs to possible metadata holders for satpy scene. [Martin
+  Raspaud]
+
+- Remove metadata from Scene instantiation. [Martin Raspaud]
 
 - Update changelog. [Panu Lahtinen]
 
