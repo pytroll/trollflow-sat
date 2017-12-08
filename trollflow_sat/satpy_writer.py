@@ -165,7 +165,13 @@ class DataWriter(Thread):
                         product_config = lcl.info["product_config"]
                         products = lcl.info["products"]
 
+                    # Available composite names
+                    composite_names = [dset.name for dset in lcl.keys()]
+
                     for i, prod in enumerate(products):
+                        # Skip the removed composites
+                        if prod not in composite_names:
+                            continue
                         fnames, _ = utils.create_fnames(info,
                                                         product_config,
                                                         prod)
