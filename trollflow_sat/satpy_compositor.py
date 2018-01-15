@@ -93,11 +93,17 @@ class SceneLoader(AbstractWorkflowComponent):
             # Check solar elevations and remove those composites that
             # are outside of their specified ranges
             composites = set()
+
+            try:
+                start_time = global_data.attrs['start_time']
+            except AttributeError:
+                start_time = global_data.info['start_time']
+
             for composite in all_composites:
                 if utils.bad_sunzen_range_satpy(
                         product_config,
                         group, composite,
-                        global_data.info['start_time']):
+                        start_time):
                     self.logger.info("Removing composite '%s'; out of "
                                      "valid solar angle range", composite)
                 else:
