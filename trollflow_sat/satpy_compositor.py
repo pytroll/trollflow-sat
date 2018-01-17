@@ -120,7 +120,10 @@ class SceneLoader(AbstractWorkflowComponent):
 
             # use_extern_calib=use_extern_calib
             global_data.load(composites)
-            global_data.info["products"] = composites
+            try:
+                global_data.attrs['products'] = composites
+            except AttributeError:
+                global_data.info['products'] = composites
             context["output_queue"].put(global_data)
 
             if utils.release_locks([context["lock"]]):
