@@ -64,10 +64,16 @@ class Resampler(AbstractWorkflowComponent):
         prod_list = product_config["product_list"]
 
         # Overpass for coverage calculations
-        overpass = Pass(glbl.info['platform_name'],
-                        glbl.info['start_time'],
-                        glbl.info['end_time'],
-                        instrument=glbl.info['sensor'][0])
+        try:
+            overpass = Pass(glbl.attrs['platform_name'],
+                            glbl.attrs['start_time'],
+                            glbl.attrs['end_time'],
+                            instrument=glbl.attrs['sensor'][0])
+        except AttributeError:
+            overpass = Pass(glbl.info['platform_name'],
+                            glbl.info['start_time'],
+                            glbl.info['end_time'],
+                            instrument=glbl.info['sensor'][0])
 
         for area_id in prod_list:
             # Check for area coverage
