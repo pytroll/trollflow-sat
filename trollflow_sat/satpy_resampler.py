@@ -64,16 +64,21 @@ class Resampler(AbstractWorkflowComponent):
         prod_list = product_config["product_list"]
 
         # Overpass for coverage calculations
-        overpass = Pass(glbl.info['platform_name'],
-                        glbl.info['start_time'],
-                        glbl.info['end_time'],
-                        instrument=glbl.info['sensor'][0])
+        if product_config['common'].get('coverage_check', True):
+            overpass = Pass(glbl.info['platform_name'],
+                            glbl.info['start_time'],
+                            glbl.info['end_time'],
+                            instrument=glbl.info['sensor'][0])
+        else:
+            overpass = None
 
         for area_id in prod_list:
             # Check for area coverage
-            min_coverage = prod_list[area_id].get("min_coverage", 0.0)
-            if not utils.covers(overpass, area_id, min_coverage, self.logger):
-                continue
+            if overpass is not None:
+                min_coverage = prod_list[area_id].get("min_coverage", 0.0)
+                if not utils.covers(overpass, area_id, min_coverage,
+                                    self.logger):
+                    continue
 
             kwargs['radius_of_influence'] = None
             try:
