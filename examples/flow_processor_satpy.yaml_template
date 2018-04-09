@@ -13,6 +13,11 @@ config:
   use_locks: &use_locks
     true
 
+  # By default a Pass object is created for coverage calculations, but
+  # that causes problems with geostationary satellites. It is
+  # possible to disable that feature by uncommenting the option below
+  # coverage_check: false
+
 work:
     - type: daemon
       name: listener
