@@ -1,6 +1,33 @@
 Changelog
 =========
 
+%%version%% (unreleased)
+------------------------
+
+- Update changelog. [Panu Lahtinen]
+
+- Merge pull request #17 from pytroll/bugfix-xarray. [Panu Lahtinen]
+
+  Fix compatibility with satpy/feature-xarray
+
+- Merge branch 'develop' into bugfix-xarray. [Martin Raspaud]
+
+- Add an option to completely skip coverage checking. [Panu Lahtinen]
+
+- Merge pull request #16 from pytroll/bugfix-xarray. [Martin Raspaud]
+
+  Fix compatibility with satpy/feature-xarray
+
+- Merge pull request #15 from pytroll/develop. [Panu Lahtinen]
+
+  Merge develop to master
+
+- Fix satpy_resampler to support xarray. [Martin Raspaud]
+
+- Fix compatibility with satpy/feature-xarray. [Martin Raspaud]
+
+- Fix compatibility with satpy/feature-xarray. [Martin Raspaud]
+
 v0.9.0 (2017-12-08)
 -------------------
 
