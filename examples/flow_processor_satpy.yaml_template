@@ -45,7 +45,7 @@ work:
             # ignore_* keywords can be used to remove some troublesome items
             #    from the message the compositor receives. In this case, we
             #    remove the `collection_area_id` item from the message data.
-            ignore_collection_area_id: true
+            # ignore_collection_area_id: true
     - type: workflow
       name: satpy_resampler
       Workflow:
