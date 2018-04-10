@@ -3,6 +3,7 @@ using satpy"""
 
 import logging
 import time
+from copy import deepcopy
 
 import yaml
 
@@ -22,11 +23,11 @@ class SceneLoader(AbstractWorkflowComponent):
         super(SceneLoader, self).__init__()
 
     def pre_invoke(self):
-        """Pre-invoke"""
+        """Pre-invoke."""
         pass
 
     def invoke(self, context):
-        """Invoke"""
+        """Invoke."""
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
         self.logger.debug("Locking is used in resampler: %s",
@@ -45,7 +46,10 @@ class SceneLoader(AbstractWorkflowComponent):
 
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
-        msg = context['content']
+        msg = deepcopy(context['content'])
+        for key, val in context.items():
+            if key.startswith('ignore_') and val is True:
+                msg.data.pop(key[7:], None)
 
         global_data = self.create_scene_from_message(msg, instruments)
         if global_data is None:
