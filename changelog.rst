@@ -1,8 +1,52 @@
 Changelog
 =========
 
-v0.9.0 (2017-12-08)
--------------------
+v0.10.0 (2018-04-10)
+--------------------
+
+Fix
+~~~
+
+- Bugfix: use start_time instead of time_slot in satpy_writer. [Martin
+  Raspaud]
+
+Other
+~~~~~
+
+- Update changelog. [Panu Lahtinen]
+
+- Bump version: 0.9.0 → 0.10.0. [Panu Lahtinen]
+
+- Merge pull request #21 from pytroll/feature-ignore-message-items.
+  [Panu Lahtinen]
+
+  Add ignore_* functionnality for messages items
+
+- Comment out ignore_ parameter in example workflow. [Martin Raspaud]
+
+- Add ignore_* functionnality for messages items. [Martin Raspaud]
+
+- Merge pull request #17 from pytroll/bugfix-xarray. [Panu Lahtinen]
+
+  Fix compatibility with satpy/feature-xarray
+
+- Merge branch 'develop' into bugfix-xarray. [Martin Raspaud]
+
+- Add an option to completely skip coverage checking. [Panu Lahtinen]
+
+- Merge pull request #16 from pytroll/bugfix-xarray. [Martin Raspaud]
+
+  Fix compatibility with satpy/feature-xarray
+
+- Merge pull request #15 from pytroll/develop. [Panu Lahtinen]
+
+  Merge develop to master
+
+- Fix satpy_resampler to support xarray. [Martin Raspaud]
+
+- Fix compatibility with satpy/feature-xarray. [Martin Raspaud]
+
+- Fix compatibility with satpy/feature-xarray. [Martin Raspaud]
 
 - Update changelog. [Panu Lahtinen]
 
@@ -202,18 +246,6 @@ v0.9.0 (2017-12-08)
 
 - Check if file is local before fetching. [Martin Raspaud]
 
-v0.8.0 (2017-05-09)
--------------------
-
-Fix
-~~~
-
-- Bugfix: use start_time instead of time_slot in satpy_writer. [Martin
-  Raspaud]
-
-Other
-~~~~~
-
 - Update changelog. [Panu Lahtinen]
 
 - Bump version: 0.7.0 → 0.8.0. [Panu Lahtinen]
@@ -227,9 +259,6 @@ Other
 - Add fetch plugin. [Martin Raspaud]
 
 - Fix PyYAML case as dependency in setup.cfg. [Martin Raspaud]
-
-v0.7.0 (2017-04-04)
--------------------
 
 - Update changelog. [Panu Lahtinen]
 
@@ -247,9 +276,6 @@ v0.7.0 (2017-04-04)
 
 - Skip coverage calculation if min_coverage is not defined. [Panu
   Lahtinen]
-
-v0.6.0 (2017-03-28)
--------------------
 
 - Update changelog. [Panu Lahtinen]
 
@@ -301,17 +327,11 @@ v0.6.0 (2017-03-28)
 
 - Add missing kwarg. [Panu Lahtinen]
 
-v0.5.1 (2017-03-21)
--------------------
-
 - Update changelog. [Panu Lahtinen]
 
 - Bump version: 0.5.0 → 0.5.1. [Panu Lahtinen]
 
 - Fix missing acquire_lock. [Panu Lahtinen]
-
-v0.5.0 (2017-03-21)
--------------------
 
 - Update changelog. [Panu Lahtinen]
 
@@ -343,9 +363,6 @@ v0.5.0 (2017-03-21)
 - Add helper functions for monitoring messaging. [Panu Lahtinen]
 
 - Add monitoring messages. [Panu Lahtinen]
-
-v0.4.0 (2017-03-14)
--------------------
 
 - Update changelog. [Panu Lahtinen]
 
@@ -388,17 +405,11 @@ v0.4.0 (2017-03-14)
 - Check used instruments, give data filenames as arguments to load()
   [Panu Lahtinen]
 
-v0.3.0 (2017-03-07)
--------------------
-
 - Update changelog. [Panu Lahtinen]
 
 - Bump version: 0.2.0 → 0.3.0. [Panu Lahtinen]
 
 - Compose the topic to include {area_id} (if configured) [Panu Lahtinen]
-
-v0.2.0 (2017-02-28)
--------------------
 
 - Update changelog. [Panu Lahtinen]
 
