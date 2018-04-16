@@ -216,13 +216,20 @@ class DataWriter(Thread):
 
                             for dest_key in self._publish_vars:
                                 if dest_key != '*':
-                                    to_send[dest_key] = info.get(
-                                        self._publish_vars[dest_key]
-                                        if
-                                        isinstance(self._publish_vars, dict)
-                                        else
-                                        dest_key)
-
+                                    if isinstance(self._publish_vars, dict):
+                                        val = self._publish_vars[dest_key]
+                                        if val.startswith("="):
+                                            try:
+                                                val = eval(val[1:])
+                                                to_send[dest_key] = val
+                                            except:
+                                                self.logger.error("Cannot eval expression '%s'", val[1:])
+                                        else:
+                                            to_send[dest_key] = info.get(
+                                                self._publish_vars[dest_key])
+                                    else:
+                                        to_send[dest_key] = dest_key
+                                    
                             to_send_fix = {"nominal_time": info["start_time"],
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
