@@ -4,7 +4,7 @@ import os.path
 import Queue
 import time
 from threading import Thread
-
+from utils import select_dict_items
 from posttroll.message import Message
 from posttroll.publisher import Publish
 from trollflow_sat import utils
@@ -211,24 +211,7 @@ class DataWriter(Thread):
                             except AttributeError:
                                 area_data = None
 
-                            to_send = dict(info) if '*' \
-                                in self._publish_vars else {}
-
-                            for dest_key in self._publish_vars:
-                                if dest_key != '*':
-                                    if isinstance(self._publish_vars, dict):
-                                        val = self._publish_vars[dest_key]
-                                        if val.startswith("="):
-                                            try:
-                                                val = eval(val[1:])
-                                                to_send[dest_key] = val
-                                            except:
-                                                self.logger.error("Cannot eval expression '%s'", val[1:])
-                                        else:
-                                            to_send[dest_key] = info.get(
-                                                self._publish_vars[dest_key])
-                                    else:
-                                        to_send[dest_key] = dest_key
+                            to_send = select_dict_items(info, self._publish_vars)
                                     
                             to_send_fix = {"nominal_time": info["start_time"],
                                            "uid": os.path.basename(fname),

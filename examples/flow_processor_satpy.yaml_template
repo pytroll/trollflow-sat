@@ -101,11 +101,11 @@ work:
             # publish everything with
             # publish_vars: "*"
             #
-            # it is also possible to use python expression
+            # it is also possible to use dpath expressions
             # to forward more complex values. I.e.:
             #
             # publish_vars: 
-            #   source_uri: "=[e.get('uri') for e in info['dataset']]"
+            #   source_uri: "/dataset/*/uri"
             #
             # This creates a list of the original URIs and publishs it
             # as source_uri    

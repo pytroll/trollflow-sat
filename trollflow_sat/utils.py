@@ -16,6 +16,12 @@ try:
     from pyorbital import astronomy
 except ImportError:
     astronomy = None
+    
+try:
+    import dpath.util
+    DPATH_AVAILABLE = True
+except ImportError:
+    DPATH_AVAILABLE = False
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
@@ -351,3 +357,35 @@ def covers(overpass, area_name, min_coverage, logger):
         logger.warning("Can't compute area coverage with %s!",
                        area_name)
     return True
+
+
+def select_dict_items(src_dict, selection):
+    """Creates a new dictionary containing elements listed in selection"""
+    to_send = dict(src_dict) if '*' \
+        in selection else {}
+
+    for dest_key in selection:
+        if dest_key != '*':
+            if isinstance(selection, dict):
+                val = selection[dest_key]
+                if '/' in val:
+                    if not DPATH_AVAILABLE:
+                        LOGGER.error("path expressions in publish_var but no dpath available")
+                    else:
+                        # use dpath for path expressions
+                        info_without_empty_keys = \
+                            {k: v for k, v in src_dict.items() if k}
+                        if '*' in val:
+                            # returns list
+                            to_send[dest_key] = \
+                                dpath.util.values(info_without_empty_keys, val)
+                        else:
+                            # returns single value
+                            to_send[dest_key] = \
+                                dpath.util.get(info_without_empty_keys, val)
+                else:
+                    to_send[dest_key] = src_dict.get(val)
+            else:
+                to_send[dest_key] = dest_key
+    return to_send
+
