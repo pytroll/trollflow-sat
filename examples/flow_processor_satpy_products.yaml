@@ -7,8 +7,10 @@ common:
   formats: &formats
     - format: png
       writer: null
-    - format: nc
-      writer: adaguc
+    # - format: nc
+    #   writer: adaguc
+  # For GEO data, uncomment the following line
+  coverage_check: false
 
 groups:
   europe:
