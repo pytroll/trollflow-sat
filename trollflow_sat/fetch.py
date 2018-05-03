@@ -143,7 +143,9 @@ def fetch_files(message, destination):
         for dset in new_message.data["dataset"]:
             dset["uri"] = fetch_file(dset["uri"], destination)
     elif new_message.type == "collection":
-        raise NotImplementedError
+        for col in new_message.data['collection']:
+            for dset in col['dataset']:
+                dset["uri"] = fetch_file(dset["uri"], destination)
     else:
         new_message.data["uri"] = fetch_file(new_message.data["uri"],
                                              destination)
