@@ -144,8 +144,11 @@ def fetch_files(message, destination):
             dset["uri"] = fetch_file(dset["uri"], destination)
     elif new_message.type == "collection":
         for col in new_message.data['collection']:
-            for dset in col['dataset']:
-                dset["uri"] = fetch_file(dset["uri"], destination)
+            if 'dataset' in col:
+                for dset in col['dataset']:
+                    dset["uri"] = fetch_file(dset["uri"], destination)
+            else:
+                col["uri"] = fetch_file(col["uri"], destination)
     else:
         new_message.data["uri"] = fetch_file(new_message.data["uri"],
                                              destination)
