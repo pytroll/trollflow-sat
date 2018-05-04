@@ -193,7 +193,13 @@ class SceneLoader(AbstractWorkflowComponent):
             for dset in mda["dataset"]:
                 filenames.append(dset["uri"])
         elif msg_type == "collection":
-            raise NotImplementedError
+            for col in mda['collection']:
+                if 'dataset' in col:
+                    for dset in col['dataset']:
+                        filenames.append(dset["uri"])
+                else:
+                    filenames.append(col["uri"])
+
         else:
             filenames = mda['uri']
 
