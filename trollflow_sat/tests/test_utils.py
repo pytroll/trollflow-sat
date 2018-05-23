@@ -144,6 +144,23 @@ class TestUtils(unittest.TestCase):
         self.assertIsNone(res['orbit_number'])
         self.assertEqual(res['status'], 'foo')
 
+    def test_select_dict_items(self):
+        info = {"a": "a_value", "b": "b_value", "c": [{"c_a": "c1_a_value", "c_b": "c1_b_value"}, {"c_a": "c2_a_value", "c_b": "c2_b_value"}]}
+         
+        selection = {'b_new': 'b'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'b_new': 'b_value'})
+        
+        selection = {'b_new': 'b', 'b2': 'a'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'b_new': 'b_value', 'b2': 'a_value'})
+        
+        selection = {'cXa': '/c/*/c_a', 'a': 'a'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'cXa': ['c1_a_value', 'c2_a_value'], 'a': 'a_value'})
+        
+        #selection = [('*', ''), ('super_param', 'gatherer_time'), ('gatherer_time', 'gatherer_time'), ('source_uri', '/dataset/*/uri')]
+        
 
 def suite():
     """The suite for test_utils

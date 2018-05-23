@@ -97,5 +97,15 @@ work:
             # the variable name in the received message.
             # publish_vars:
             #   gatherer_time: gatherer_time
+            #
             # publish everything with
-			# publish_vars: "*"
+            # publish_vars: "*"
+            #
+            # it is also possible to use dpath expressions
+            # to forward more complex values. I.e.:
+            #
+            # publish_vars: 
+            #   source_uri: "/dataset/*/uri"
+            #
+            # This creates a list of the original URIs and publishs it
+            # as source_uri    
