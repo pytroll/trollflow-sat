@@ -158,15 +158,13 @@ class DataWriter(Thread):
 
                     lcl = data['scene']
                     extra_metadata = data['extra_metadata']
+                    product_config = extra_metadata["product_config"]
+                    products = extra_metadata["products"]
 
                     try:
                         scn_metadata = lcl.attrs.copy()
-                        product_config = extra_metadata["product_config"]
-                        products = extra_metadata["products"]
                     except AttributeError:
                         scn_metadata = lcl.info.copy()
-                        product_config = extra_metadata["product_config"]
-                        products = extra_metadata["products"]
 
                     # Available composite names
                     composite_names = [dset.name for dset in lcl.keys()]

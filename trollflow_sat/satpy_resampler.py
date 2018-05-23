@@ -119,12 +119,16 @@ class Resampler(AbstractWorkflowComponent):
                 self.logger.info("Resampling time slot %s to area %s",
                                  metadata["start_time"], area_id)
                 lcl = glbl.resample(area_id, **kwargs)
+
+            # Add area ID to the scene attributes so everything needed
+            # in filename composing is in the same dictionary
             try:
-                metadata = extra_metadata.copy()  # lcl.attrs
+                lcl.attrs["area_id"] = area_id
             except AttributeError:
-                metadata = extra_metadata.copy()  # lcl.info
+                lcl.info["area_id"] = area_id
+
+            metadata = extra_metadata.copy()
             metadata["product_config"] = product_config
-            metadata["area_id"] = area_id
             metadata["products"] = prod_list[area_id]['products']
 
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
