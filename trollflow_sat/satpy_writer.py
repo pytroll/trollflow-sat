@@ -173,9 +173,10 @@ class DataWriter(Thread):
                         # Skip the removed composites
                         if prod not in composite_names:
                             continue
-                        fnames, _ = utils.create_fnames(scn_metadata,
-                                                        product_config,
-                                                        prod)
+                        fnames, productname = \
+                            utils.create_fnames(scn_metadata,
+                                                product_config,
+                                                prod)
                         # Some of the files might have specific
                         # writers, use them if configured
                         writers = utils.get_writer_names(product_config, prod,
@@ -219,7 +220,7 @@ class DataWriter(Thread):
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
                                            "area": area_data,
-                                           "productname": extra_metadata["productname"]
+                                           "productname": productname
                                            }
                             to_send.update(to_send_fix)
 
