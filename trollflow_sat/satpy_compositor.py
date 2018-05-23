@@ -76,6 +76,7 @@ class SceneLoader(AbstractWorkflowComponent):
         #                                                 "False")
 
         for group in product_config["groups"]:
+            extra_metadata = {}
             # Set lock if locking is used
             if self.use_lock:
                 self.logger.debug("Compositor acquires own lock %s",
@@ -125,10 +126,11 @@ class SceneLoader(AbstractWorkflowComponent):
             # use_extern_calib=use_extern_calib
             global_data.load(composites)
             try:
-                global_data.attrs['products'] = composites
+                extra_metadata['products'] = composites
             except AttributeError:
-                global_data.info['products'] = composites
-            context["output_queue"].put(global_data)
+                extra_metadata['products'] = composites
+            context["output_queue"].put({'scene': global_data,
+                                         'extra_metadata': extra_metadata})
 
             if utils.release_locks([context["lock"]]):
                 self.logger.debug("Compositor releases own lock %s",

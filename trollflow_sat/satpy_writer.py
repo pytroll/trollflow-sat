@@ -144,7 +144,7 @@ class DataWriter(Thread):
             while self._loop:
                 if self.queue is not None:
                     try:
-                        lcl = self.queue.get(True, 1)
+                        data = self.queue.get(True, 1)
                         if self.prev_lock is not None:
                             self.logger.debug("Writer acquires lock of "
                                               "previous worker: %s",
@@ -156,14 +156,17 @@ class DataWriter(Thread):
                         # lock for the previous worker
                         continue
 
+                    lcl = data['scene']
+                    extra_metadata = data['extra_metadata']
+
                     try:
-                        info = lcl.attrs.copy()
-                        product_config = lcl.attrs["product_config"]
-                        products = lcl.attrs["products"]
+                        scn_metadata = lcl.attrs.copy()
+                        product_config = extra_metadata["product_config"]
+                        products = extra_metadata["products"]
                     except AttributeError:
-                        info = lcl.info.copy()
-                        product_config = lcl.info["product_config"]
-                        products = lcl.info["products"]
+                        scn_metadata = lcl.info.copy()
+                        product_config = extra_metadata["product_config"]
+                        products = extra_metadata["products"]
 
                     # Available composite names
                     composite_names = [dset.name for dset in lcl.keys()]
@@ -172,13 +175,13 @@ class DataWriter(Thread):
                         # Skip the removed composites
                         if prod not in composite_names:
                             continue
-                        fnames, _ = utils.create_fnames(info,
+                        fnames, _ = utils.create_fnames(scn_metadata,
                                                         product_config,
                                                         prod)
                         # Some of the files might have specific
                         # writers, use them if configured
                         writers = utils.get_writer_names(product_config, prod,
-                                                         info["area_id"])
+                                                         extra_metadata["area_id"])
 
                         for j, fname in enumerate(fnames):
                             if writers[j]:
@@ -211,23 +214,23 @@ class DataWriter(Thread):
                             except AttributeError:
                                 area_data = None
 
-                            to_send = dict(info) if '*' \
+                            to_send = dict(scn_metadata) if '*' \
                                 in self._publish_vars else {}
 
                             for dest_key in self._publish_vars:
                                 if dest_key != '*':
-                                    to_send[dest_key] = info.get(
+                                    to_send[dest_key] = scn_metadata.get(
                                         self._publish_vars[dest_key]
                                         if
                                         isinstance(self._publish_vars, dict)
                                         else
                                         dest_key)
 
-                            to_send_fix = {"nominal_time": info["start_time"],
+                            to_send_fix = {"nominal_time": scn_metadata["start_time"],
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
                                            "area": area_data,
-                                           "productname": info["productname"]
+                                           "productname": extra_metadata["productname"]
                                            }
                             to_send.update(to_send_fix)
 

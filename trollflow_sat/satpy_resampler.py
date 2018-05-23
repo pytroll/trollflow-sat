@@ -35,7 +35,9 @@ class Resampler(AbstractWorkflowComponent):
                               "worker: %s", str(context["prev_lock"]))
             utils.acquire_lock(context["prev_lock"])
 
-        glbl = context["content"]
+        glbl = context["content"]["scene"]
+        extra_metadata = context["content"]["extra_metadata"]
+
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
 
@@ -65,14 +67,14 @@ class Resampler(AbstractWorkflowComponent):
 
         # Overpass for coverage calculations
         try:
-            metadata = glbl.attrs
+            scn_metadata = glbl.attrs
         except AttributeError:
-            metadata = glbl.info
+            scn_metadata = glbl.info
         if product_config['common'].get('coverage_check', True):
-            overpass = Pass(metadata['platform_name'],
-                            metadata['start_time'],
-                            metadata['end_time'],
-                            instrument=metadata['sensor'][0])
+            overpass = Pass(scn_metadata['platform_name'],
+                            scn_metadata['start_time'],
+                            scn_metadata['end_time'],
+                            instrument=scn_metadata['sensor'][0])
         else:
             overpass = None
 
@@ -118,17 +120,18 @@ class Resampler(AbstractWorkflowComponent):
                                  metadata["start_time"], area_id)
                 lcl = glbl.resample(area_id, **kwargs)
             try:
-                metadata = lcl.attrs
+                metadata = extra_metadata.copy()  # lcl.attrs
             except AttributeError:
-                metadata = lcl.info
+                metadata = extra_metadata.copy()  # lcl.info
             metadata["product_config"] = product_config
             metadata["area_id"] = area_id
             metadata["products"] = prod_list[area_id]['products']
 
             self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
                               "to writer's queue",
-                              area_id, str(metadata["start_time"]))
-            context["output_queue"].put(lcl)
+                              area_id, str(scn_metadata["start_time"]))
+            context["output_queue"].put({'scene': lcl,
+                                         'extra_metadata': metadata})
             del lcl
             lcl = None
 
