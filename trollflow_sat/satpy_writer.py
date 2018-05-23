@@ -179,7 +179,7 @@ class DataWriter(Thread):
                         # Some of the files might have specific
                         # writers, use them if configured
                         writers = utils.get_writer_names(product_config, prod,
-                                                         extra_metadata["area_id"])
+                                                         scn_metadata["area_id"])
 
                         for j, fname in enumerate(fnames):
                             if writers[j]:
