@@ -217,7 +217,7 @@ class DataWriter(Thread):
                             to_send = select_dict_items(scn_metadata,
                                                         self._publish_vars)
 
-                            to_send_fix = {"nominal_time": info["start_time"],
+                            to_send_fix = {"nominal_time": scn_metadata["start_time"],
                                            "uid": os.path.basename(fname),
                                            "uri": os.path.abspath(fname),
                                            "area": area_data,
