@@ -32,11 +32,24 @@ work:
         - trollflow_sat.satpy_compositor.SceneLoader:
             product_list: *product_list
             instruments:
-              - avhrr/3
+              - seviri
+              - abi
+
+            # Several different readers can be configured so the same
+            # instance can be used to process different kinds of data.
+            # By default SatPy will find the reader automatically.
+            # The reader can also be specified in the incoming message
+            # (with "reader" keyword), and that will be used instead
+            # of this list.
+            #
+            # readers:
+            #   - hrit_msg
+            #   - abi_l1b
+
             # Topic for optional monitoring messages
             # monitor_topic: /monitor
             # Name of the running service, used in monitoring messages
-            # service: hrpt
+            # service: seviri
             # Optional list of nameservers and nameserver port
             # nameservers:
             #   - localhost
@@ -50,8 +63,12 @@ work:
       name: satpy_resampler
       Workflow:
         - trollflow_sat.satpy_resampler.Resampler:
-            # Use "null" instead of "None"
-            radius: null
+            # By default the resampler is "nearest".  Also "ewa" and "bilinear"
+            # are available
+            # resampler: nearest
+            # Set search radius in meters.  Use "null" instead of "None" for
+            # default value
+            # radius: null
             # Save resampling LUTs?
             precompute: True
             # Save directory for resampling LUTs.  Has effect only if

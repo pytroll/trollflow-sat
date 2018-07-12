@@ -44,6 +44,8 @@ class SceneLoader(AbstractWorkflowComponent):
                                 log_msg="No instruments configured!")
             return
 
+        readers = context.get("readers", None)
+
         with open(context["product_list"], "r") as fid:
             product_config = yaml.load(fid)
         msg = deepcopy(context['content'])
@@ -51,7 +53,8 @@ class SceneLoader(AbstractWorkflowComponent):
             if key.startswith('ignore_') and val is True:
                 msg.data.pop(key[7:], None)
 
-        global_data = self.create_scene_from_message(msg, instruments)
+        global_data = self.create_scene_from_message(msg, instruments,
+                                                     readers=readers)
         if global_data is None:
             utils.release_locks([context["lock"], context["prev_lock"]],
                                 log=self.logger.info,
@@ -165,13 +168,14 @@ class SceneLoader(AbstractWorkflowComponent):
         """Post-invoke"""
         pass
 
-    def create_scene_from_message(self, msg, instruments):
+    def create_scene_from_message(self, msg, instruments, readers=None):
         """Parse the message *msg* and return a corresponding MPOP scene.
         """
         if msg.type in ["file", 'collection', 'dataset']:
-            return self.create_scene_from_mda(msg.data, msg.type, instruments)
+            return self.create_scene_from_mda(msg.data, msg.type, instruments,
+                                              readers=readers)
 
-    def create_scene_from_mda(self, mda, msg_type, instruments):
+    def create_scene_from_mda(self, mda, msg_type, instruments, readers=None):
         """Read the metadata *mda* and return a corresponding MPOP scene.
         """
         start_time = (mda.get('start_time') or
@@ -208,10 +212,20 @@ class SceneLoader(AbstractWorkflowComponent):
         if not isinstance(filenames, (list, set, tuple)):
             filenames = [filenames]
 
-        reader = mda.get('reader') or None
-
         # Create satellite scene
-        global_data = Scene(filenames=filenames, reader=reader)
+
+        # There can be several readers configured for one instance, so
+        # try which matches.  If there's a reader specified in the
+        # incoming message, use that.
+        readers = list(mda.get('reader') or readers)
+        for reader in readers:
+            try:
+                self.logger.debug("Trying reader %s", reader)
+                global_data = Scene(filenames=filenames, reader=reader)
+                self.logger.debug("Reader selected.")
+                break
+            except ValueError:
+                continue
 
         try:
             global_data.attrs.update(mda)
