@@ -23,6 +23,7 @@ except ImportError:
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
+WRITER = "simple_image"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def create_fnames(info, product_config, prod_id):
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
         formats = product_config["common"].get("formats", [{"format": FORMAT,
-                                                            "writer": None}])
+                                                            "writer": WRITER}])
 
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
@@ -126,10 +127,10 @@ def get_writer_names(product_config, prod_id, area_id):
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
         formats = product_config["common"].get("formats", [{"format": FORMAT,
-                                                            "writer": None}])
+                                                            "writer": WRITER}])
     writers = []
     for fmt in formats:
-        writers.append(fmt.get("writer", None))
+        writers.append(fmt.get("writer", None) or WRITER)
 
     return writers
 
