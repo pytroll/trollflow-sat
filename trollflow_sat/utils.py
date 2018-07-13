@@ -98,7 +98,7 @@ def create_fnames(info, product_config, prod_id):
     parsedefs, _ = extract_parsedef(pattern)
     for itm in parsedefs:
         if isinstance(itm, dict):
-            key, val = itm.items()[0]
+            key, val = tuple(itm.items())[0]
             if val is None:
                 continue
             # Need to exclude 'end_time' and 'proc_time' / 'processing_time'
