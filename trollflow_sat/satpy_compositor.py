@@ -135,12 +135,15 @@ class SceneLoader(AbstractWorkflowComponent):
             context["output_queue"].put({'scene': global_data,
                                          'extra_metadata': extra_metadata})
 
-            if utils.release_locks([context["lock"]]):
-                self.logger.debug("Compositor releases own lock %s",
-                                  str(context["lock"]))
-                # Wait 1 second to ensure next worker has time to acquire the
-                # lock
-                time.sleep(1)
+        # Add "terminator" to the queue
+        context["output_queue"].put(None)
+
+        if utils.release_locks([context["lock"]]):
+            self.logger.debug("Compositor releases own lock %s",
+                              str(context["lock"]))
+            # Wait 1 second to ensure next worker has time to acquire the
+            # lock
+            time.sleep(1)
 
         del global_data
         global_data = None
