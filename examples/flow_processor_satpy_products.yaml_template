@@ -7,9 +7,12 @@ common:
   formats: &formats
     - format: png
       writer: null
-    # - format: nc
-    #   writer: adaguc
-  # For GEO data, uncomment the following line
+    # - format: tif
+    #   writer: geotiff
+    # See available writers via SatPy:
+    # from satpy.writers import available_writers; available_writers()
+
+  # For GEO data, disable area coverage check
   coverage_check: false
 
 groups:
