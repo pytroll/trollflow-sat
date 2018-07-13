@@ -7,16 +7,14 @@ from trollflow.utils import acquire_lock as trollflow_acquire_lock
 from trollflow.utils import release_lock
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
-try:
-    from satpy.resample import get_area_def
-except ImportError:
-    from mpop.projector import get_area_def
+
+from satpy.resample import get_area_def
 
 try:
     from pyorbital import astronomy
 except ImportError:
     astronomy = None
-    
+
 try:
     import dpath.util
     DPATH_AVAILABLE = True
@@ -388,4 +386,3 @@ def select_dict_items(src_dict, selection):
             else:
                 to_send[dest_key] = dest_key
     return to_send
-
