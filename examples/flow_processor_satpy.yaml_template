@@ -1,8 +1,8 @@
 config:
   product_list: &product_list
-    /home/lahtinep/Software/pytroll/config_files/flow_processor_satpy_products.yaml
+    /path/to/flow_processor_satpy_products.yaml
   log_config:
-    /home/lahtinep/Software/pytroll/config_files/flow_processor_log_config.ini
+    /path/to/flow_processor_log_config.ini
 
   # It is possible to lock each worker to reduce simultaneous CPU load and
   # memory usage.  Each step that has *use_lock* set as true will wait until
