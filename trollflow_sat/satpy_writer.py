@@ -1,10 +1,9 @@
 
 import logging
 import os.path
-import Queue
+import six.moves.queue as queue
 import time
 from threading import Thread
-from utils import select_dict_items
 from posttroll.message import Message
 from posttroll.publisher import Publish
 from trollflow_sat import utils
@@ -25,7 +24,7 @@ class DataWriterContainer(object):
         # store parameters for later writer restarts
         self.topic = topic
         self._input_queue = None
-        self.output_queue = None  # Queue.Queue()
+        self.output_queue = None
         self.thread = None
         self.use_lock = use_lock
         self._save_settings = save_settings
@@ -151,7 +150,7 @@ class DataWriter(Thread):
                                               str(self.prev_lock))
                             utils.acquire_lock(self.prev_lock)
                         self.queue.task_done()
-                    except Queue.Empty:
+                    except queue.Empty:
                         # After all the items have been processed, release the
                         # lock for the previous worker
                         continue
@@ -213,7 +212,8 @@ class DataWriter(Thread):
                             except AttributeError:
                                 area_data = None
 
-                            to_send = select_dict_items(scn_metadata,
+                            to_send = \
+                                utils.select_dict_items(scn_metadata,
                                                         self._publish_vars)
 
                             to_send_fix = {"nominal_time": scn_metadata["start_time"],
