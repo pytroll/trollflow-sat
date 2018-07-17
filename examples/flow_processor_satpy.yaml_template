@@ -5,17 +5,17 @@ config:
     /path/to/flow_processor_log_config.ini
 
   # It is possible to lock each worker to reduce simultaneous CPU load and
-  # memory usage.  Each step that has *use_lock* set as true will wait until
-  # the next worker has completed the previous task.  This is a global value
-  # that is used below.  The individual values can be set as seen fit for
-  # the planned use. NOTE: dameon workers do not have locks, but will release
-  # locking for the previous Workflow worker.
+  #   memory usage.  Each step that has *use_lock* set as true will wait until
+  #   the next worker has completed the previous task.  This is a global value
+  #   that is used below.  The individual values can be set as seen fit for
+  #   the planned use. NOTE: daemon workers do not have locks, but will release
+  #   locking for the previous Workflow worker.
   use_locks: &use_locks
     true
 
   # By default a Pass object is created for coverage calculations, but
-  # that causes problems with geostationary satellites. It is
-  # possible to disable that feature by uncommenting the option below
+  #   that causes problems with geostationary satellites. It is
+  #   possible to disable that feature by uncommenting the option below
   # coverage_check: false
 
 work:
@@ -30,17 +30,23 @@ work:
       name: satpy_compositor
       Workflow:
         - trollflow_sat.satpy_compositor.SceneLoader:
+            # The product list
             product_list: *product_list
+
+            # Lock/don't lock
+            use_lock: *use_locks
+
+            # Instruments that are processed
             instruments:
               - seviri
               - abi
 
             # Several different readers can be configured so the same
-            # instance can be used to process different kinds of data.
-            # By default SatPy will find the reader automatically.
-            # The reader can also be specified in the incoming message
-            # (with "reader" keyword), and that will be used instead
-            # of this list.
+            #   instance can be used to process different kinds of data.
+            #   By default SatPy will find the reader automatically.
+            #   The reader can also be specified in the incoming message
+            #   (with "reader" keyword), and that will be used instead
+            #   of this list.
             #
             # readers:
             #   - hrit_msg
@@ -48,45 +54,65 @@ work:
 
             # Topic for optional monitoring messages
             # monitor_topic: /monitor
+
             # Name of the running service, used in monitoring messages
             # service: seviri
+
             # Optional list of nameservers and nameserver port
             # nameservers:
             #   - localhost
             # port: 0
-            use_lock: *use_locks
+
             # ignore_* keywords can be used to remove some troublesome items
-            #    from the message the compositor receives. In this case, we
-            #    remove the `collection_area_id` item from the message data.
+            #   from the message the compositor receives. In this case, we
+            #   remove the `collection_area_id` item from the message data.
             # ignore_collection_area_id: true
+
     - type: workflow
       name: satpy_resampler
       Workflow:
         - trollflow_sat.satpy_resampler.Resampler:
-            # By default the resampler is "nearest".  Also "ewa" and "bilinear"
-            # are available
-            # resampler: nearest
-            # Set search radius in meters.  Use "null" instead of "None" for
-            # default value
-            # radius: null
-            # Give cache_dir if resampling LUTs will be saved/re-used
-            cache_dir: /var/tmp/
-            # Use data mask when calculating resampling (True, default), or use
-            # un-masked coordinates (False).  The latter saves computation
-            # time, but may leave holes in the data that might be filled
-            # otherwise.  Resampling LUTs are saved only if mask_area is False
-            mask_area: False
-            nprocs: 2
-            proj_method: nearest
+            # Process each area separately (True) or all together (False)
+            process_by_area: True
+
+            # The product list
             product_list: *product_list
+
+            # Lock/don't lock the previous worker
             use_lock: *use_locks
+
+            # By default the resampler is "nearest".  Also "ewa" and "bilinear"
+            #   are available
+            # resampler: nearest
+
+            # Set search radius in meters.  Use "null" instead of "None" for
+            #   the resampler's default value
+            # radius: null
+
+            # Give cache_dir if resampling LUTs will be saved/re-used
+            # cache_dir: /var/tmp/
+
+            # Use data mask when calculating resampling (True, default), or use
+            #   un-masked coordinates (False).  The latter saves computation
+            #   time, but may leave holes in the data that might be filled
+            #   otherwise.  Resampling LUTs are saved only if mask_area is False
+            # mask_area: False
+
+            # Number of processors to use for resampling.  Default: 1
+            # nprocs: 1
+
     - type: daemon
       name: satpy_writer
       components:
         - class: !!python/object:trollflow_sat.satpy_writer.DataWriterContainer
-            nameservers: []
-            port: 0
-            topic: /another/image/yay
+            # To publish messages when the data has been saved, set a topic here
+            # topic: /another/image/yay
+            # Connect to the listed nameservers
+            # nameservers: []
+            # Publish message on a specific port.  Use `0` for random free port
+            # port: 0
+
+            # Settings passed to the writer
             save_settings:
               compression: 6
               # Use "null" instead of "None"
@@ -98,28 +124,27 @@ work:
               # Use "null" instead of "None"
               fformat: null
               blocksize: 0
+
             # By default writer doesn't lock the compositor, but that
-            # can be done by setting use_lock to true
+            #   can be done by setting use_lock to true
             # use_lock: true
-            #
+
             # Writer publishes only a fixed set of variables
-            # in its posttroll message. If you want to forward
-            # attributes that were received from a previous
-            # processing stage, you can define a map called
-            # publish_vars. The keys denote variable names in
-            # the message to be published. The value defines
-            # the variable name in the received message.
+            #   in its posttroll message. If you want to forward
+            #   attributes that were received from a previous
+            #   processing stage, you can define a map called
+            #   publish_vars. The keys denote variable names in
+            #   the message to be published. The value defines
+            #   the variable name in the received message.
             # publish_vars:
             #   gatherer_time: gatherer_time
-            #
+
             # publish everything with
-            # publish_vars: "*"
-            #
-            # it is also possible to use dpath expressions
-            # to forward more complex values. I.e.:
-            #
+            # publish_vars:
+            #    "*"
+
+            # it is also possible to use dpath expressions to forward
+            #   more complex values.  This creates a list of the
+            #   original URIs and publishes it as source_uri
             # publish_vars: 
             #   source_uri: "/dataset/*/uri"
-            #
-            # This creates a list of the original URIs and publishs it
-            # as source_uri    
