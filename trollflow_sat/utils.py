@@ -135,19 +135,9 @@ def get_writer_names(product_config, prod_id, area_id):
     return writers
 
 
-def get_satpy_group_composite_names(product_config, group):
-    """Parse composite names from the product config for the given
-    group."""
-    composites = set()
-    prod_list = product_config['product_list']
-    for group in product_config['groups'][group]:
-        composites.update(set(prod_list[group]['products'].keys()))
-    return composites
-
-
 def get_satpy_area_composite_names(product_config, area_id):
     """Parse composite names from the product config for the given
-    group."""
+    area."""
     prod_list = product_config['product_list']
     return prod_list[area_id]['products'].keys()
 
@@ -160,13 +150,11 @@ def find_time_name(info):
     return None
 
 
-def bad_sunzen_range_satpy(product_config, group, composite, start_time):
+def bad_sunzen_range_satpy(product_config, area_id, composite, start_time):
     """Check if Sun zenith angle is valid at the configured location.
     SatPy version.
     TODO: refactor with bad_sunzen_range()
     """
-    # FIXME: check all areas within the group
-    area_id = product_config['groups'][group][0]
     product_conf = \
         product_config["product_list"][area_id]["products"][composite]
 

@@ -78,7 +78,7 @@ class SceneLoader(AbstractWorkflowComponent):
         # use_extern_calib = product_config["common"].get("use_extern_calib",
         #                                                 "False")
 
-        for group in product_config["groups"]:
+        for area_id in product_config["product_list"]:
             extra_metadata = {}
             # Set lock if locking is used
             if self.use_lock:
@@ -87,7 +87,7 @@ class SceneLoader(AbstractWorkflowComponent):
                 utils.acquire_lock(context["lock"])
 
             if "collection_area_id" in msg.data:
-                if group != msg.data["collection_area_id"]:
+                if area_id != msg.data["collection_area_id"]:
                     utils.release_locks([context["lock"]],
                                         log=self.logger.debug,
                                         log_msg="Collection not for this " +
@@ -95,8 +95,7 @@ class SceneLoader(AbstractWorkflowComponent):
                     continue
 
             all_composites = \
-                utils.get_satpy_group_composite_names(product_config,
-                                                      group)
+                set(product_config["product_list"][area_id]['products'].keys())
 
             # Check solar elevations and remove those composites that
             # are outside of their specified ranges
@@ -107,7 +106,7 @@ class SceneLoader(AbstractWorkflowComponent):
             for composite in all_composites:
                 if utils.bad_sunzen_range_satpy(
                         product_config,
-                        group, composite,
+                        area_id, composite,
                         start_time):
                     self.logger.info("Removing composite '%s'; out of "
                                      "valid solar angle range", composite)
@@ -120,15 +119,12 @@ class SceneLoader(AbstractWorkflowComponent):
                 self.logger.debug("Unloading unnecessary channels: %s",
                                   str(sorted(reqs_to_unload)))
                 global_data.unload(list(reqs_to_unload))
-            self.logger.info("Loading required data for this group: %s",
+            self.logger.info("Loading required data for this area: %s",
                              ', '.join(sorted(composites)))
 
             # use_extern_calib=use_extern_calib
             global_data.load(composites)
-            try:
-                extra_metadata['products'] = composites
-            except AttributeError:
-                extra_metadata['products'] = composites
+            extra_metadata['products'] = composites
             context["output_queue"].put({'scene': global_data,
                                          'extra_metadata': extra_metadata})
 

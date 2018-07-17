@@ -27,12 +27,6 @@ common:
   # Use external calibration coefficients, only meaningful for few instruments
   # use_extern_calib: false
 
-# Areas can be grouped to gether for loading.  Will be removed due to
-#   lazy evaluation of the data.
-groups:
-  europe:
-    - euron1
-
 # Product list
 product_list:
 
