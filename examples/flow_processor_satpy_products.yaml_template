@@ -24,9 +24,6 @@ common:
   # For GEO data, disable area coverage check
   # coverage_check: false
 
-  # Use external calibration coefficients, only meaningful for few instruments
-  # use_extern_calib: false
-
 # Product list
 product_list:
 
