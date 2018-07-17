@@ -21,6 +21,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def __init__(self):
         super(SceneLoader, self).__init__()
+        self.use_lock = True
 
     def pre_invoke(self):
         """Pre-invoke."""
@@ -75,17 +76,20 @@ class SceneLoader(AbstractWorkflowComponent):
                                monitor_metadata,
                                nameservers=nameservers, port=port)
 
+        # TODO: add usage of external calibration coefficients
         # use_extern_calib = product_config["common"].get("use_extern_calib",
         #                                                 "False")
 
+        # Set lock if locking is used
+        if self.use_lock:
+            self.logger.debug("Compositor acquires own lock %s",
+                              str(context["lock"]))
+            utils.acquire_lock(context["lock"])
+
         for area_id in product_config["product_list"]:
             extra_metadata = {}
-            # Set lock if locking is used
-            if self.use_lock:
-                self.logger.debug("Compositor acquires own lock %s",
-                                  str(context["lock"]))
-                utils.acquire_lock(context["lock"])
 
+            # Check if the data was collected for specific area
             if "collection_area_id" in msg.data:
                 if area_id != msg.data["collection_area_id"]:
                     utils.release_locks([context["lock"]],
@@ -94,41 +98,16 @@ class SceneLoader(AbstractWorkflowComponent):
                                         "area, skipping")
                     continue
 
-            all_composites = \
-                set(product_config["product_list"][area_id]['products'].keys())
+            # Load and unload composites for this area
+            composites = self.load_composites(global_data, product_config,
+                                              area_id)
 
-            # Check solar elevations and remove those composites that
-            # are outside of their specified ranges
-            composites = set()
-
-            start_time = global_data.attrs['start_time']
-
-            for composite in all_composites:
-                if utils.bad_sunzen_range_satpy(
-                        product_config,
-                        area_id, composite,
-                        start_time):
-                    self.logger.info("Removing composite '%s'; out of "
-                                     "valid solar angle range", composite)
-                else:
-                    composites.add(composite)
-
-            prev_reqs = {itm.name for itm in global_data.datasets}
-            reqs_to_unload = prev_reqs - composites
-            if len(reqs_to_unload) > 0:
-                self.logger.debug("Unloading unnecessary channels: %s",
-                                  str(sorted(reqs_to_unload)))
-                global_data.unload(list(reqs_to_unload))
-            self.logger.info("Loading required data for this area: %s",
-                             ', '.join(sorted(composites)))
-
-            # use_extern_calib=use_extern_calib
-            global_data.load(composites)
             extra_metadata['products'] = composites
             context["output_queue"].put({'scene': global_data,
                                          'extra_metadata': extra_metadata})
 
-        # Add "terminator" to the queue
+        # Add "terminator" to the queue to trigger computations for
+        # this global scene
         context["output_queue"].put(None)
 
         if utils.release_locks([context["lock"]]):
@@ -174,13 +153,6 @@ class SceneLoader(AbstractWorkflowComponent):
     def create_scene_from_mda(self, mda, msg_type, instruments, readers=None):
         """Read the metadata *mda* and return a corresponding MPOP scene.
         """
-        start_time = (mda.get('start_time') or
-                      mda.get('nominal_time') or
-                      None)
-        end_time = mda.get('end_time') or None
-
-        platform_name = mda["platform_name"]
-
         if isinstance(mda['sensor'], (list, tuple, set)):
             sensor = mda['sensor'][0]
         else:
@@ -223,11 +195,42 @@ class SceneLoader(AbstractWorkflowComponent):
             except ValueError:
                 continue
 
-        try:
-            global_data.attrs.update(mda)
-            self.logger.debug("SCENE: %s", str(global_data.attrs))
-        except AttributeError:
-            global_data.info.update(mda)
-            self.logger.debug("SCENE: %s", str(global_data.info))
+        global_data.attrs.update(mda)
+        self.logger.debug("SCENE: %s", str(global_data.attrs))
 
         return global_data
+
+    def load_composites(self, global_data, product_config, area_id):
+        """Get a set of composites for an area"""
+        all_composites = \
+            set(product_config["product_list"][area_id]['products'].keys())
+
+        # Check solar elevations and remove those composites that
+        # are outside of their specified ranges
+        composites = set()
+
+        start_time = global_data.attrs['start_time']
+
+        # Check for Sun zenith angle limits
+        for composite in all_composites:
+            if utils.bad_sunzen_range_satpy(
+                    product_config,
+                    area_id, composite,
+                    start_time):
+                self.logger.info("Removing composite '%s'; out of "
+                                 "valid solar angle range", composite)
+            else:
+                composites.add(composite)
+
+        # Unload possible pre-existing composites that are not used
+        prev_reqs = {itm.name for itm in global_data.datasets}
+        reqs_to_unload = prev_reqs - composites
+        if len(reqs_to_unload) > 0:
+            self.logger.debug("Unloading unnecessary channels: %s",
+                              str(sorted(reqs_to_unload)))
+            global_data.unload(list(reqs_to_unload))
+
+        self.logger.info("Loading required data for area %s: %s",
+                         area_id,
+                         ', '.join(sorted(composites)))
+        global_data.load(composites)
