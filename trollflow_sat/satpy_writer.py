@@ -155,18 +155,17 @@ class DataWriter(Thread):
                             utils.acquire_lock(self.prev_lock)
                         self.queue.task_done()
                     except queue.Empty:
-                        # After all the items have been processed, release the
-                        # lock for the previous worker
                         continue
 
                     if data is None:
-                        self.logger.info("Processing and saving all data")
+                        if self.data:
+                            self.logger.info("Processing and saving all data")
 
-                        compute_writer_results(self.data)
+                            compute_writer_results(self.data)
 
-                        for msg in self.messages:
-                            pub.send(str(msg))
-                            self.logger.debug("Sent message: %s", str(msg))
+                            for msg in self.messages:
+                                pub.send(str(msg))
+                                self.logger.debug("Sent message: %s", str(msg))
 
                         self.data = []
                         self.messages = []

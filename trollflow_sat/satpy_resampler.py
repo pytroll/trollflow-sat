@@ -79,7 +79,7 @@ class Resampler(AbstractWorkflowComponent):
         kwargs['nprocs'] = context.get('nprocs', 1)
         self.logger.debug("Using %d CPUs for resampling.", kwargs['nprocs'])
 
-        kwargs['resampler'] = context.get('proj_method', "nearest")
+        kwargs['resampler'] = context.get('resampler', "nearest")
         self.logger.debug("Using resampling method: '%s'.",
                           kwargs['resampler'])
 
@@ -163,6 +163,9 @@ class Resampler(AbstractWorkflowComponent):
                               area_id, str(scn_metadata["start_time"]))
             context["output_queue"].put({'scene': lcl,
                                          'extra_metadata': metadata})
+            if context["process_by_area"]:
+                context["output_queue"].put(None)
+
             del lcl
             lcl = None
 
