@@ -102,10 +102,7 @@ class SceneLoader(AbstractWorkflowComponent):
             # are outside of their specified ranges
             composites = set()
 
-            try:
-                start_time = global_data.attrs['start_time']
-            except AttributeError:
-                start_time = global_data.info['start_time']
+            start_time = global_data.attrs['start_time']
 
             for composite in all_composites:
                 if utils.bad_sunzen_range_satpy(
