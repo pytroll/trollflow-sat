@@ -8,7 +8,10 @@ import yaml
 
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
-from trollsched.satpass import Pass
+try:
+    from trollsched.satpass import Pass
+except ImportError:
+    Pass = None
 
 
 class Resampler(AbstractWorkflowComponent):
@@ -98,7 +101,7 @@ class Resampler(AbstractWorkflowComponent):
             scn_metadata = glbl.attrs
         except AttributeError:
             scn_metadata = glbl.info
-        if product_config['common'].get('coverage_check', True):
+        if product_config['common'].get('coverage_check', True) and Pass:
             overpass = Pass(scn_metadata['platform_name'],
                             scn_metadata['start_time'],
                             scn_metadata['end_time'],
