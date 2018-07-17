@@ -19,6 +19,7 @@ class Resampler(AbstractWorkflowComponent):
 
     def __init__(self):
         super(Resampler, self).__init__()
+        self.use_lock = False
 
     def pre_invoke(self):
         """Pre-invoke"""

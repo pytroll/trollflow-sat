@@ -21,7 +21,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
     def __init__(self):
         super(SceneLoader, self).__init__()
-        self.use_lock = True
+        self.use_lock = False
 
     def pre_invoke(self):
         """Pre-invoke."""
