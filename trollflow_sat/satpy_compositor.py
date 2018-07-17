@@ -30,7 +30,7 @@ class SceneLoader(AbstractWorkflowComponent):
         """Invoke."""
         # Set locking status, default to False
         self.use_lock = context.get("use_lock", False)
-        self.logger.debug("Locking is used in resampler: %s",
+        self.logger.debug("Locking is used in compositor: %s",
                           str(self.use_lock))
         if self.use_lock:
             self.logger.debug("Compositor acquires lock of previous "
