@@ -195,8 +195,8 @@ class SceneLoader(AbstractWorkflowComponent):
             except ValueError:
                 continue
 
-        global_data.attrs.update(mda)
         self.logger.debug("SCENE: %s", str(global_data.attrs))
+        global_data.attrs.update(mda)
 
         return global_data
 
