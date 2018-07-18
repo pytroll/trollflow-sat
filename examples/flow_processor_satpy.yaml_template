@@ -33,8 +33,10 @@ work:
             # The product list
             product_list: *product_list
 
-            # Lock/don't lock
-            use_lock: *use_locks
+            # Don't use locking when the previous plugin is
+            #   ListenerContainer: you will miss the messages coming when it
+            #   is locked!
+            use_lock: False
 
             # Instruments that are processed
             instruments:
