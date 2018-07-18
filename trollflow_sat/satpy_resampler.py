@@ -46,18 +46,6 @@ class Resampler(AbstractWorkflowComponent):
             # Process the scene
             self._process(context)
 
-        if utils.release_locks([context["lock"]]):
-            self.logger.debug("Resampler releases own lock %s",
-                              str(context["lock"]))
-            # Wait 1 second to ensure next worker has time to acquire the
-            # lock
-            time.sleep(1)
-
-        # Wait until the lock has been released downstream
-        if self.use_lock:
-            utils.acquire_lock(context["lock"])
-            utils.release_locks([context["lock"]])
-
         # After all the items have been processed, release the lock for
         # the previous step
         utils.release_locks([context["prev_lock"]], log=self.logger.debug,
@@ -169,6 +157,18 @@ class Resampler(AbstractWorkflowComponent):
                                          'extra_metadata': metadata})
             if context["process_by_area"]:
                 context["output_queue"].put(None)
+
+            if utils.release_locks([context["lock"]]):
+                self.logger.debug("Resampler releases own lock %s",
+                                  str(context["lock"]))
+                # Wait 1 second to ensure next worker has time to acquire the
+                # lock
+                time.sleep(1)
+
+            # Wait until the lock has been released downstream
+            if self.use_lock:
+                utils.acquire_lock(context["lock"])
+                utils.release_locks([context["lock"]])
 
             del lcl
             lcl = None
