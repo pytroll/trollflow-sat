@@ -258,6 +258,7 @@ class DataWriter(Thread):
                        "productname": productname
                        }
         to_send.update(to_send_fix)
+        area_data.update(to_send_fix)
 
         topic = self._topic
         # Compose the topic with area information
