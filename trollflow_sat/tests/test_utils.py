@@ -25,7 +25,7 @@ from trollflow_sat import utils
 from trollflow.utils import ordered_load
 from posttroll.message import Message
 
-CONFIG_MINIMAL = """common:
+CONFIG_MINIMAL = u"""common:
   use_extern_calib: false
 
 groups:

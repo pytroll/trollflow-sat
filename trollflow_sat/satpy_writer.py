@@ -1,9 +1,11 @@
 
 import logging
 import os.path
-import six.moves.queue as queue
+from six.moves.queue import Empty as queue_empty
 import time
 from threading import Thread
+from satpy.writers import compute_writer_results
+
 from posttroll.message import Message
 from posttroll.publisher import Publish
 from trollflow_sat import utils
@@ -119,6 +121,9 @@ class DataWriter(Thread):
         self._topic = topic
         self.prev_lock = prev_lock
         self._publish_vars = publish_vars or {}
+        self.data = []
+        self.messages = []
+        self.pub = None
 
     def run(self):
         """Run the thread."""
@@ -138,7 +143,7 @@ class DataWriter(Thread):
 
         # Initialize publisher context
         with Publish("l2producer", port=self._port,
-                     nameservers=self._nameservers) as pub:
+                     nameservers=self._nameservers) as self.pub:
 
             while self._loop:
                 if self.queue is not None:
@@ -150,94 +155,16 @@ class DataWriter(Thread):
                                               str(self.prev_lock))
                             utils.acquire_lock(self.prev_lock)
                         self.queue.task_done()
-                    except queue.Empty:
-                        # After all the items have been processed, release the
-                        # lock for the previous worker
+                    except queue_empty:
                         continue
 
-                    lcl = data['scene']
-                    extra_metadata = data['extra_metadata']
-                    product_config = extra_metadata["product_config"]
-                    products = extra_metadata["products"]
+                    if data is None:
+                        self._compute()
+                        self.data = []
+                        self.messages = []
+                    else:
+                        self._process(data, **kwargs)
 
-                    try:
-                        scn_metadata = lcl.attrs.copy()
-                    except AttributeError:
-                        scn_metadata = lcl.info.copy()
-
-                    # Available composite names
-                    composite_names = [dset.name for dset in lcl.keys()]
-
-                    for i, prod in enumerate(products):
-                        # Skip the removed composites
-                        if prod not in composite_names:
-                            continue
-                        fnames, productname = \
-                            utils.create_fnames(scn_metadata,
-                                                product_config,
-                                                prod)
-                        # Some of the files might have specific
-                        # writers, use them if configured
-                        writers = utils.get_writer_names(product_config, prod,
-                                                         scn_metadata["area_id"])
-
-                        for j, fname in enumerate(fnames):
-                            if writers[j]:
-                                self.logger.info("Saving %s with writer %s",
-                                                 fname, writers[j])
-                            else:
-                                self.logger.info(
-                                    "Saving %s with default writer", fname)
-
-                            lcl.save_dataset(prod,
-                                             filename=fname,
-                                             writer=writers[j],
-                                             **kwargs)
-
-                            self.logger.info("Saved %s", fname)
-
-                            try:
-                                area = lcl[prod].attrs.get("area")
-                            except AttributeError:
-                                area = lcl[prod].info.get("area")
-
-                            try:
-                                area_data = {"name": area.name,
-                                             "area_id": area.area_id,
-                                             "proj_id": area.proj_id,
-                                             "proj4": area.proj4_string,
-                                             "shape": (area.x_size,
-                                                       area.y_size)
-                                             }
-                            except AttributeError:
-                                area_data = None
-
-                            to_send = \
-                                utils.select_dict_items(scn_metadata,
-                                                        self._publish_vars)
-
-                            to_send_fix = {"nominal_time": scn_metadata["start_time"],
-                                           "uid": os.path.basename(fname),
-                                           "uri": os.path.abspath(fname),
-                                           "area": area_data,
-                                           "productname": productname
-                                           }
-                            to_send.update(to_send_fix)
-
-                            if self._topic is not None:
-                                topic = self._topic
-                                if area_data is not None:
-                                    topic = compose(topic,  area_data)
-                                else:
-                                    topic = compose(topic,
-                                                    {'area_id': 'satproj'})
-
-                                msg = Message(topic, "file", to_send)
-                                pub.send(str(msg))
-                                self.logger.debug("Sent message: %s", str(msg))
-
-                    del lcl
-                    lcl = None
                     # After all the items have been processed, release the
                     # lock for the previous worker
                     if self.prev_lock is not None:
@@ -248,6 +175,102 @@ class DataWriter(Thread):
                                             str(self.prev_lock))
                 else:
                     time.sleep(1)
+
+    def _compute(self):
+        """Compute the data."""
+        if self.data:
+            self.logger.info("Processing and saving all data")
+            compute_writer_results(self.data)
+            self._send_messages()
+
+    def _send_messages(self):
+        """Send currently collected messages about completed datasets."""
+        for msg in self.messages:
+            self.pub.send(str(msg))
+            self.logger.debug("Sent message: %s", str(msg))
+
+    def _process(self, data, **kwargs):
+        """Process the incoming data lazily"""
+        lcl = data['scene']
+        extra_metadata = data['extra_metadata']
+        product_config = extra_metadata["product_config"]
+        products = extra_metadata["products"]
+
+        scn_metadata = lcl.attrs.copy()
+
+        # Available composite names
+        composite_names = [dset.name for dset in lcl.keys()]
+
+        # Save all products in a delayed way
+        for prod in products:
+            # Skip the removed composites
+            if prod not in composite_names:
+                continue
+
+            # Create output filenames for this product
+            fnames, productname = \
+                utils.create_fnames(scn_metadata,
+                                    product_config,
+                                    prod)
+            # Some of the files might have specific
+            # writers, use them if configured
+            writers = utils.get_writer_names(product_config, prod,
+                                             scn_metadata["area_id"])
+
+            # Create delayed writer objects and messages
+            for j, fname in enumerate(fnames):
+                self.data.append(lcl.save_datasets(datasets=[prod],
+                                                   file_pattern=fname,
+                                                   writer=writers[j],
+                                                   compute=False,
+                                                   **kwargs))
+
+                # Create message for this file
+                self._create_message(lcl[prod].attrs.get("area"),
+                                     fname, scn_metadata, productname)
+
+    def _create_message(self, area, fname, scn_metadata, productname):
+        """Create a message and add it to self.messages"""
+        # No messaging without a topic
+        if self._topic is None:
+            return
+
+        try:
+            area_data = {"name": area.name,
+                         "area_id": area.area_id,
+                         "proj_id": area.proj_id,
+                         "proj4": area.proj4_string,
+                         "shape": (area.x_size,
+                                   area.y_size)
+                         }
+        except AttributeError:
+            area_data = None
+
+        # Create message metadata dictionary
+        to_send = \
+            utils.select_dict_items(scn_metadata,
+                                    self._publish_vars)
+
+        to_send_fix = {"nominal_time": scn_metadata["start_time"],
+                       "uid": os.path.basename(fname),
+                       "uri": os.path.abspath(fname),
+                       "area": area_data,
+                       "productname": productname
+                       }
+        to_send.update(to_send_fix)
+        area_data.update(to_send_fix)
+
+        topic = self._topic
+        # Compose the topic with area information
+        if area_data is not None:
+            topic = compose(topic, area_data)
+        else:
+            topic = compose(topic,
+                            {'area_id': 'satproj'})
+
+        # Create message
+        msg = Message(topic, "file", to_send)
+        self.messages.append(msg)
 
     def stop(self):
         """Stop writer."""

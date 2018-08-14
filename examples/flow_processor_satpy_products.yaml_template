@@ -1,29 +1,58 @@
 common:
+
+  # Global setting for the output directory.  Can be overriden for
+  #   individual areas and products
   output_dir: &output_dir
     /tmp/
-  use_extern_calib: false
-  fname_pattern: &fname
+
+  # Global filename pattern.  Can be overriden for individual areas and products
+  fname_pattern: &fname_pattern
     "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}"
+
+  # Global output formats and writers to use.  Can be overriden for
+  #   individual areas and products
+  #   See available writers via SatPy:
+  #      from satpy.writers import available_writers; available_writers()
+  #   Use "null" to use the default writer
   formats: &formats
     - format: png
       writer: null
-    # - format: nc
-    #   writer: adaguc
-  # For GEO data, uncomment the following line
-  coverage_check: false
+    # To save the same image in several formats, just list all the formats here
+    # - format: tif
+    #   writer: geotiff
 
-groups:
-  europe:
-    - euron1
+  # For GEO data, disable area coverage check
+  # coverage_check: false
 
+# Product list
 product_list:
+
+  # A dictionary of different areas.  The primary keys are the ID for
+  #   the area definition
   euron1:
+
+    # Name of the area used eg. in filenames
     areaname: euron1
-    # Optional coverage check, defaults to 0.0 if not given, that is,
-    # all overpasses are processed
+
+    # Optional coverage check.  Coverage defaults to 0.0 % if not
+    #   given, that is, all overpasses are processed
     # min_coverage: 30.0
+
+    # Dictionary of the products
     products:
+
+      # Name of the composite in SatPy
       overview:
+
+        # Name of the product used eg. in filenames
         productname: overview
+
+        # Use global setting (default), or set the specific directory
+        #   for this product
         output_dir: *output_dir
+
+        # Use global setting for the filename pattern.
+        fname_pattern: *fname_pattern
+
+        # Use global formats and writers.
         formats: *formats
