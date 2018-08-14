@@ -1,7 +1,7 @@
 """Classes for handling segment gathering for Trollflow based Trollduction"""
 
 import logging
-import Queue
+import six.moves.queue as queue
 from threading import Thread
 import time
 import datetime as dt
@@ -28,7 +28,7 @@ class SegmentGathererContainer(object):
     def __init__(self, config):
         self.gatherer = None
         self._input_queue = None
-        self.output_queue = Queue.Queue()
+        self.output_queue = queue.Queue()
         self.thread = None
 
         # Create a SegmentGatherer instance
@@ -292,7 +292,7 @@ class SegmentGatherer(Thread):
                 except KeyboardInterrupt:
                     self.stop()
                     continue
-                except Queue.Empty:
+                except queue.Empty:
                     continue
             else:
                 time.sleep(1)
