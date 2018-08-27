@@ -7,16 +7,14 @@ from trollflow.utils import acquire_lock as trollflow_acquire_lock
 from trollflow.utils import release_lock
 from trollsift import compose
 from trollsift.parser import _extract_parsedef as extract_parsedef
-try:
-    from satpy.resample import get_area_def
-except ImportError:
-    from mpop.projector import get_area_def
+
+from satpy.resample import get_area_def
 
 try:
     from pyorbital import astronomy
 except ImportError:
     astronomy = None
-    
+
 try:
     import dpath.util
     DPATH_AVAILABLE = True
@@ -25,6 +23,7 @@ except ImportError:
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 FORMAT = "png"
+WRITER = "simple_image"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,7 +77,7 @@ def create_fnames(info, product_config, prod_id):
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
         formats = product_config["common"].get("formats", [{"format": FORMAT,
-                                                            "writer": None}])
+                                                            "writer": WRITER}])
 
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
@@ -100,7 +99,7 @@ def create_fnames(info, product_config, prod_id):
     parsedefs, _ = extract_parsedef(pattern)
     for itm in parsedefs:
         if isinstance(itm, dict):
-            key, val = itm.items()[0]
+            key, val = tuple(itm.items())[0]
             if val is None:
                 continue
             # Need to exclude 'end_time' and 'proc_time' / 'processing_time'
@@ -128,27 +127,17 @@ def get_writer_names(product_config, prod_id, area_id):
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
         formats = product_config["common"].get("formats", [{"format": FORMAT,
-                                                            "writer": None}])
+                                                            "writer": WRITER}])
     writers = []
     for fmt in formats:
-        writers.append(fmt.get("writer", None))
+        writers.append(fmt.get("writer", None) or WRITER)
 
     return writers
 
 
-def get_satpy_group_composite_names(product_config, group):
-    """Parse composite names from the product config for the given
-    group."""
-    composites = set()
-    prod_list = product_config['product_list']
-    for group in product_config['groups'][group]:
-        composites.update(set(prod_list[group]['products'].keys()))
-    return composites
-
-
 def get_satpy_area_composite_names(product_config, area_id):
     """Parse composite names from the product config for the given
-    group."""
+    area."""
     prod_list = product_config['product_list']
     return prod_list[area_id]['products'].keys()
 
@@ -161,13 +150,11 @@ def find_time_name(info):
     return None
 
 
-def bad_sunzen_range_satpy(product_config, group, composite, start_time):
+def bad_sunzen_range_satpy(product_config, area_id, composite, start_time):
     """Check if Sun zenith angle is valid at the configured location.
     SatPy version.
     TODO: refactor with bad_sunzen_range()
     """
-    # FIXME: check all areas within the group
-    area_id = product_config['groups'][group][0]
     product_conf = \
         product_config["product_list"][area_id]["products"][composite]
 
@@ -388,4 +375,3 @@ def select_dict_items(src_dict, selection):
             else:
                 to_send[dest_key] = dest_key
     return to_send
-
