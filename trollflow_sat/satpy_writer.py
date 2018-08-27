@@ -227,6 +227,9 @@ class DataWriter(Thread):
                             if self._topic is not None:
                                 topic = self._topic
                                 if area_data is not None:
+                                    tmp = to_send.copy()
+                                    del tmp["area"]
+                                    area_data.update(tmp)
                                     topic = compose(topic,  area_data)
                                 else:
                                     topic = compose(topic,
