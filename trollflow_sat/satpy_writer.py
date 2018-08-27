@@ -258,11 +258,13 @@ class DataWriter(Thread):
                        "productname": productname
                        }
         to_send.update(to_send_fix)
-        area_data.update(to_send_fix)
 
         topic = self._topic
         # Compose the topic with area information
         if area_data is not None:
+            tmp = to_send.copy()
+            del tmp["area"]
+            area_data.update(tmp)
             topic = compose(topic, area_data)
         else:
             topic = compose(topic,
