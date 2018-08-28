@@ -22,8 +22,10 @@ except ImportError:
     DPATH_AVAILABLE = False
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
-FORMAT = "png"
-WRITER = "simple_image"
+
+FORMAT_DEFAULTS = {'writer': 'geotiff',
+                   'format': 'tif',
+                   'fill_value': None}
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,10 +76,9 @@ def create_fnames(info, product_config, prod_id):
     pattern = os.path.join(output_dir, pattern)
 
     # Find output formats
-    formats = products[prod_id].get("formats", ["", ])
-    if formats[0] == "":
-        formats = product_config["common"].get("formats", [{"format": FORMAT,
-                                                            "writer": WRITER}])
+    formats = products[prod_id].get("formats", None)
+    if formats is None:
+        formats = product_config["common"].get("formats", [FORMAT_DEFAULTS])
 
     prod_name = products[prod_id]["productname"]
     info["productname"] = prod_name
@@ -121,32 +122,20 @@ def create_fnames(info, product_config, prod_id):
     return (fnames, prod_name)
 
 
-def get_writer_names(product_config, prod_id, area_id):
-    """Get writer names for the """
+def get_format_settings(product_config, prod_id, area_id):
+    """Get all the format settings for this product"""
     products = product_config["product_list"][area_id]["products"]
-    formats = products[prod_id].get("formats", ["", ])
-    if formats[0] == "":
-        formats = product_config["common"].get("formats", [{"writer": WRITER}])
-    writers = []
+    formats = products[prod_id].get("formats", [{}])
+
+    settings = []
     for fmt in formats:
-        writers.append(fmt.get("writer", None) or WRITER)
+        tmp = {}
+        for key in FORMAT_DEFAULTS.keys():
+            val = fmt.get(key, FORMAT_DEFAULTS[key])
+            tmp[key] = val
+        settings.append(tmp)
 
-    return writers
-
-
-def get_fill_values(product_config, prod_id, area_id):
-    """Get writer names for the """
-    products = product_config["product_list"][area_id]["products"]
-    formats = products[prod_id].get("formats", ["", ])
-    if formats[0] == "":
-        formats = product_config["common"].get("formats",
-                                               [{"fill_value": None}])
-
-    fill_values = []
-    for fmt in formats:
-        fill_values.append(fmt.get("fill_value", None))
-
-    return writers
+    return settings
 
 
 def get_satpy_area_composite_names(product_config, area_id):

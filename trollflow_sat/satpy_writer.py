@@ -212,22 +212,21 @@ class DataWriter(Thread):
                 utils.create_fnames(scn_metadata,
                                     product_config,
                                     prod)
-            # Some of the files might have specific
-            # writers, use them if configured
-            writers = utils.get_writer_names(product_config, prod,
+            # Some of the files might have specific format settings,
+            # so read them from the config.  Use SatPy defaults if
+            # nothing is given.
+            fmts = utils.get_format_settings(product_config, prod,
                                              scn_metadata["area_id"])
-            # Same goes for fill_value settings
-            fill_values = utils.get_fill_values(product_config, prod,
-                                                scn_metadata["area_id"])
 
             # Create delayed writer objects and messages
             for j, fname in enumerate(fnames):
-                self.data.append(lcl.save_datasets(datasets=[prod],
-                                                   file_pattern=fname,
-                                                   writer=writers[j],
-                                                   fill_value=fill_values[j],
-                                                   compute=False,
-                                                   **kwargs))
+                dset = lcl.save_datasets(datasets=[prod],
+                                         file_pattern=fname,
+                                         writer=fmts[j]['writer'],
+                                         fill_value=fmts[j]['fill_value'],
+                                         compute=False,
+                                         **kwargs)
+                self.data.append(dset)
 
                 # Create message for this file
                 self._create_message(lcl[prod].attrs.get("area"),
