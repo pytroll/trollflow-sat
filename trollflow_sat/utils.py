@@ -131,7 +131,7 @@ def get_format_settings(product_config, prod_id, area_id):
     for fmt in formats:
         tmp = {}
         for key in FORMAT_DEFAULTS.keys():
-            val = fmt.get(key, FORMAT_DEFAULTS[key])
+            val = fmt.get(key, None) or FORMAT_DEFAULTS[key]
             tmp[key] = val
         settings.append(tmp)
 
