@@ -126,11 +126,25 @@ def get_writer_names(product_config, prod_id, area_id):
     products = product_config["product_list"][area_id]["products"]
     formats = products[prod_id].get("formats", ["", ])
     if formats[0] == "":
-        formats = product_config["common"].get("formats", [{"format": FORMAT,
-                                                            "writer": WRITER}])
+        formats = product_config["common"].get("formats", [{"writer": WRITER}])
     writers = []
     for fmt in formats:
         writers.append(fmt.get("writer", None) or WRITER)
+
+    return writers
+
+
+def get_fill_values(product_config, prod_id, area_id):
+    """Get writer names for the """
+    products = product_config["product_list"][area_id]["products"]
+    formats = products[prod_id].get("formats", ["", ])
+    if formats[0] == "":
+        formats = product_config["common"].get("formats",
+                                               [{"fill_value": None}])
+
+    fill_values = []
+    for fmt in formats:
+        fill_values.append(fmt.get("fill_value", None))
 
     return writers
 

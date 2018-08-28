@@ -216,12 +216,16 @@ class DataWriter(Thread):
             # writers, use them if configured
             writers = utils.get_writer_names(product_config, prod,
                                              scn_metadata["area_id"])
+            # Same goes for fill_value settings
+            fill_values = utils.get_fill_values(product_config, prod,
+                                                scn_metadata["area_id"])
 
             # Create delayed writer objects and messages
             for j, fname in enumerate(fnames):
                 self.data.append(lcl.save_datasets(datasets=[prod],
                                                    file_pattern=fname,
                                                    writer=writers[j],
+                                                   fill_value=fill_values[j],
                                                    compute=False,
                                                    **kwargs))
 
