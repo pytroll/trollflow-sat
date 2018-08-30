@@ -6,6 +6,7 @@ import time
 from copy import deepcopy
 
 import yaml
+from six.moves.urllib import urlparse
 
 from satpy import Scene
 from trollflow.workflow_component import AbstractWorkflowComponent
@@ -162,23 +163,19 @@ class SceneLoader(AbstractWorkflowComponent):
             self.logger.debug("Unknown sensor, skipping data.")
             return None
 
+        filenames = []
         if msg_type == "dataset":
-            filenames = []
             for dset in mda["dataset"]:
-                filenames.append(dset["uri"])
+                filenames.append(urlparse(dset["uri"]).path)
         elif msg_type == "collection":
-            filenames = []
             for col in mda['collection']:
                 if 'dataset' in col:
                     for dset in col['dataset']:
-                        filenames.append(dset["uri"])
+                        filenames.append(urlparse(dset["uri"]).path)
                 else:
-                    filenames.append(col["uri"])
+                    filenames.append(urlparse(col["uri"]).path)
         else:
-            filenames = mda['uri']
-
-        if not isinstance(filenames, (list, set, tuple)):
-            filenames = [filenames]
+            filenames.append(urlparse(mda['uri']).path)
 
         # Create satellite scene
 
