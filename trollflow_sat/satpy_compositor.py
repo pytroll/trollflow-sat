@@ -6,7 +6,7 @@ import time
 from copy import deepcopy
 
 import yaml
-from six.moves.urllib import urlparse
+from six.moves.urllib.parse import urlparse
 
 from satpy import Scene
 from trollflow.workflow_component import AbstractWorkflowComponent
