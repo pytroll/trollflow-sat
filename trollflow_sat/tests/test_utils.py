@@ -76,7 +76,7 @@ class TestUtils(unittest.TestCase):
                                                 "image_compositor_name")
         self.assertEqual(fnames[0],
                          "/tmp/2016/11/07/" +
-                         "2016_11_07_12_00_asd.png")
+                         "2016_11_07_12_00_asd.tif")
 
         # Add file formats
         self.config["common"]["formats"] = [OrderedDict([('format', 'png'), ]),
