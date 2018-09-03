@@ -29,17 +29,63 @@ PRODUCT_LIST = {
             "areaname": "areaname1",
             "products":
             {
-                "productname": "overview",
-                "fname_pattern": "pattern",
-                "formats": [{"format": "tif", "writer": None}]
+                "overview":
+                {
+                    "productname": "overview",
+                    "fname_pattern": "pattern",
+                    "formats": [{"format": "tif", "writer": None}]
+                }
             }
         }
     }
 }
 
-METADATA = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
-            "end_time": dt.datetime(2018, 8, 31, 12, 15)
-}
+FILE1 = "/path/to/data1.file"
+FILE2 = "/path/to/data2.file"
+METADATA_FILE = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
+                 "end_time": dt.datetime(2018, 8, 31, 12, 15),
+                 "sensor": "sensor1",
+                 "uri": FILE1
+                }
+METADATA_DATASET = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
+                    "end_time": dt.datetime(2018, 8, 31, 12, 15),
+                    "sensor": "sensor1",
+                    "dataset": [{"uri": FILE1},
+                                {"uri": FILE2}]
+                   }
+METADATA_COLLECTION = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
+                       "end_time": dt.datetime(2018, 8, 31, 12, 15),
+                       "sensor": "sensor1",
+                       "collection": [{"uri": FILE1},
+                                      {"uri": FILE2}]
+                      }
+METADATA_COLLECTION_DATASET = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
+                               "end_time": dt.datetime(2018, 8, 31, 12, 15),
+                               "sensor": "sensor1",
+                               "collection": [{"dataset": [{"uri": FILE1},
+                                                           {"uri": FILE2}]}]
+                      }
+
+
+class MockScene(object):
+
+    def __init__(self, filenames=None, reader=None, datasets=None, attrs=None):
+        self.filenames = filenames or []
+        self.reader = reader or []
+        self.datasets = datasets or {}
+        self.attrs = attrs or {}
+
+    def load(self, names):
+        for name in names:
+            dset = Mock(name=name)
+            self.datasets[dset] = None
+
+    def unload(self, names):
+        datasets = self.datasets.copy()
+        for name in names:
+            for dset in datasets:
+                if dset.name == name:
+                    self.datasets.pop(dset, None)
 
 
 class TestSceneLoader(unittest.TestCase):
@@ -56,10 +102,16 @@ class TestSceneLoader(unittest.TestCase):
         self.output_queue = queue.Queue()
         self.context = {'lock': self.lock, 'prev_lock': self.prev_lock,
                         'output_queue': self.output_queue}
-        self.msg = Message('/topic', 'file', METADATA)
+        self.topic = '/topic'
+        self.file_msg = Message(self.topic, 'file', METADATA_FILE)
+        self.dataset_msg = Message(self.topic, 'dataset', METADATA_DATASET)
+        self.collection_msg = Message(self.topic, 'collection',
+                                      METADATA_COLLECTION)
+        self.collection_dataset_msg = Message(self.topic, 'collection',
+                                              METADATA_COLLECTION_DATASET)
         self.dset1 = Mock(name='dset1')
         self.dset2 = Mock(name='dset2')
-        self.scene = Mock(attrs=METADATA, datasets=[self.dset1, self.dset2])
+        self.scene = Mock(attrs=METADATA_FILE, datasets=[self.dset1, self.dset2])
 
     def tearDown(self):
         import os
@@ -80,14 +132,15 @@ class TestSceneLoader(unittest.TestCase):
     def test_invoke_scene_is_none(self, foo):
         context = self.context
         context['instruments'] = ['spam']
-        context['product_list'] = write_yaml(PRODUCT_LIST)
+        context['product_list'] = self.prodlist
         context['collection_area_id'] = 'not_in_message'
         context['ignore_foo'] = True
-        context['content'] = self.msg
+        context['content'] = self.file_msg
         foo.return_value = None
         res = self.loader.invoke(context)
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
+        self.assertFalse(self.context['lock'].locked())
         foo.assert_called_once()
 
     @patch('trollflow_sat.satpy_compositor.utils.send_message')
@@ -96,11 +149,11 @@ class TestSceneLoader(unittest.TestCase):
     def test_invoke_scene_monitor_msg(self, foo, bar, baz):
         context = self.context
         context['instruments'] = ['spam']
-        context['product_list'] = write_yaml(PRODUCT_LIST)
+        context['product_list'] = self.prodlist
         context['collection_area_id'] = 'not_in_message'
         context['ignore_foo'] = True
-        context['content'] = self.msg
-        context['monitor_topic'] = '/topic'
+        context['content'] = self.file_msg
+        context['monitor_topic'] = self.topic
         # Set non-existent collection area ID
         context['content'].data['collection_area_id'] = 'asd'
         foo.return_value = self.scene
@@ -109,17 +162,116 @@ class TestSceneLoader(unittest.TestCase):
         res = self.loader.invoke(context)
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
+        self.assertFalse(self.context['lock'].locked())
+        foo.assert_called_once()
+        metadata = METADATA_FILE.copy()
+        metadata['collection_area_id'] = 'asd'
+        bar.assert_has_calls([call(metadata,
+                                    status='start', service=None),
+                              call(metadata,
+                                    status='completed', service=None)])
+        baz.assert_has_calls([call(self.topic, 'monitor', {}, nameservers=None,
+                                   port=0),
+                              call(self.topic, 'monitor', {}, nameservers=None,
+                                   port=0)])
+        self.assertIsNone(self.output_queue.get(timeout=1))
+
+    @patch('trollflow_sat.satpy_compositor.SceneLoader.load_composites')
+    @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
+    def test_invoke_scene(self, foo, bar):
+        context = self.context
+        context['instruments'] = ['spam']
+        context['product_list'] = self.prodlist
+        context['content'] = self.file_msg
+        context['use_lock'] = True
+        foo.return_value = self.scene
+        bar.return_value = {}
+
+        res = self.loader.invoke(context)
+        self.assertIsNone(res)
+        self.assertFalse(self.context['prev_lock'].locked())
+        self.assertFalse(self.context['lock'].locked())
         foo.assert_called_once()
         bar.assert_called_once()
-        baz.assert_any_call('/topic', 'monitor', {'status': 'completed'},
-                            nameservers=None, port=0)
-        #baz.assert_has_calls([call('/topic', 'monitor', {}, nameservers=None,
-        #                           port=0), 
-        #                      call('/topic', 'monitor', {'status': 'completed'},
-        #                           nameservers=None, port=0)])
+        self.assertIsNotNone(self.output_queue.get(timeout=1))
 
     def test_post_invoke(self):
         self.assertIsNone(self.loader.post_invoke())
+
+    @patch('trollflow_sat.satpy_compositor.Scene')
+    def test_create_scene_from_message(self, scene):
+        from copy import deepcopy
+        scene.return_value = Mock(attrs={})
+        # Incorrect message type
+        msg = deepcopy(self.file_msg)
+        msg.type = 'spam'
+        self.assertIsNone(self.loader.create_scene_from_message(msg, None, None))
+
+        # Unconfigured instrument
+        msg = deepcopy(self.file_msg)
+        res = self.loader.create_scene_from_message(msg, ['eggs'],
+                                                    None)
+        self.assertIsNone(res)
+
+        # Proper file message
+        msg = deepcopy(self.file_msg)
+        res = self.loader.create_scene_from_message(msg, ['sensor1'],
+                                                    None)
+        self.assertEqual(res.attrs, METADATA_FILE)
+
+    @patch('trollflow_sat.satpy_compositor.Scene')
+    def test_create_scene_from_mda(self, scene):
+        from copy import deepcopy
+
+        # Message type is dataset
+        scene.return_value = Mock(attrs={})
+        msg = deepcopy(self.dataset_msg)
+        msg.data['sensor'] = [msg.data['sensor']]
+        res = self.loader.create_scene_from_mda(msg.data, "dataset",
+                                                ['sensor1'], None)
+        meta = METADATA_DATASET.copy()
+        meta['sensor'] = [meta['sensor']]
+        self.assertEqual(res.attrs, meta)
+
+        # No readers found
+        scene.return_value = Mock(attrs={})
+        scene.side_effect = ValueError
+        msg = deepcopy(self.dataset_msg)
+        msg.data['sensor'] = [msg.data['sensor']]
+        res = self.loader.create_scene_from_mda(msg.data, "dataset",
+                                                ['sensor1'], None)
+
+        # Collection
+        msg = deepcopy(self.collection_msg)
+        # Reset the return value attrs dictionary
+        scene.return_value = Mock(attrs={})
+        scene.side_effect = None
+        res = self.loader.create_scene_from_mda(msg.data, "collection",
+                                                ['sensor1'], None)
+        self.assertEqual(res.attrs, METADATA_COLLECTION)
+
+        # Collection of datasets
+        msg = deepcopy(self.collection_dataset_msg)
+        scene.return_value = Mock(attrs={})
+        res = self.loader.create_scene_from_mda(msg.data, "collection",
+                                                ['sensor1'], None)
+        self.assertEqual(res.attrs, METADATA_COLLECTION_DATASET)
+
+    @patch('trollflow_sat.satpy_compositor.utils.bad_sunzen_range_satpy')
+    def test_load_composites(self, bad_sunzen_range_satpy):
+        # Check for unload
+        glbl_data = MockScene(attrs=METADATA_FILE)
+        bad_sunzen_range_satpy.return_value = True
+        dset = Mock(name='overview')
+        glbl_data.datasets[dset] = None
+        self.loader.load_composites(glbl_data, PRODUCT_LIST, 'area1')
+        self.assertEqual(len(glbl_data.datasets), 0)
+
+        # Check for load
+        glbl_data = MockScene(attrs=METADATA_FILE)
+        bad_sunzen_range_satpy.return_value = False
+        self.loader.load_composites(glbl_data, PRODUCT_LIST, 'area1')
+        self.assertEqual(len(glbl_data.datasets), 1)
 
 
 def write_yaml(data):
