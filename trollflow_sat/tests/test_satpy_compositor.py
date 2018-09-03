@@ -17,7 +17,10 @@
 """Unit tests for SatPy compositor plugin"""
 
 import unittest
-from unittest.mock import patch, Mock, call
+try:
+    from unittest.mock import patch, Mock, call
+except ImportError:
+    from mock import patch, Mock, call
 import datetime as dt
 
 from trollflow_sat.satpy_compositor import SceneLoader
@@ -141,7 +144,7 @@ class TestSceneLoader(unittest.TestCase):
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
         self.assertFalse(self.context['lock'].locked())
-        foo.assert_called_once()
+        self.assertTrue(foo.called)
 
     @patch('trollflow_sat.satpy_compositor.utils.send_message')
     @patch('trollflow_sat.satpy_compositor.utils.get_monitor_metadata')
@@ -163,7 +166,7 @@ class TestSceneLoader(unittest.TestCase):
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
         self.assertFalse(self.context['lock'].locked())
-        foo.assert_called_once()
+        self.assertTrue(foo.called)
         metadata = METADATA_FILE.copy()
         metadata['collection_area_id'] = 'asd'
         bar.assert_has_calls([call(metadata,
@@ -191,8 +194,8 @@ class TestSceneLoader(unittest.TestCase):
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
         self.assertFalse(self.context['lock'].locked())
-        foo.assert_called_once()
-        bar.assert_called_once()
+        self.assertTrue(foo.called)
+        self.assertTrue(bar.called)
         self.assertIsNotNone(self.output_queue.get(timeout=1))
 
     def test_post_invoke(self):
