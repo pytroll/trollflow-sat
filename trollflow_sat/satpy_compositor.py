@@ -127,7 +127,9 @@ class SceneLoader(AbstractWorkflowComponent):
             utils.release_locks([context["lock"]])
 
         if monitor_topic is not None:
-            monitor_metadata["status"] = "completed"
+            monitor_metadata = utils.get_monitor_metadata(msg.data,
+                                                          status="completed",
+                                                          service=service)
             utils.send_message(monitor_topic,
                                "monitor",
                                monitor_metadata,
@@ -182,7 +184,11 @@ class SceneLoader(AbstractWorkflowComponent):
         # There can be several readers configured for one instance, so
         # try which matches.  If there's a reader specified in the
         # incoming message, use that.
-        readers = list(mda.get('reader') or readers)
+        readers = mda.get('reader') or readers
+        if not isinstance(readers, list):
+            readers = [readers]
+
+        global_data = None
         for reader in readers:
             try:
                 self.logger.debug("Trying reader %s", reader)
@@ -192,8 +198,11 @@ class SceneLoader(AbstractWorkflowComponent):
             except ValueError:
                 continue
 
-        self.logger.debug("SCENE: %s", str(global_data.attrs))
-        global_data.attrs.update(mda)
+        if global_data is not None:
+            self.logger.debug("SCENE: %s", str(global_data.attrs))
+            global_data.attrs.update(mda)
+        else:
+            self.logger.warning("Scene not created.")
 
         return global_data
 
