@@ -26,7 +26,7 @@
 # from trollduction.tests import test_listener
 import unittest
 import doctest
-from trollflow_sat.tests import (test_utils,)
+from trollflow_sat.tests import (test_utils, test_satpy_compositor)
 
 
 def suite():
@@ -34,5 +34,6 @@ def suite():
     """
     mysuite = unittest.TestSuite()
     mysuite.addTests(test_utils.suite())
+    mysuite.addTests(test_satpy_compositor.suite())
 
     return mysuite
