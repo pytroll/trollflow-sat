@@ -132,24 +132,25 @@ class TestSceneLoader(unittest.TestCase):
         self.assertFalse(self.context['prev_lock'].locked())
 
     @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
-    def test_invoke_scene_is_none(self, foo):
+    def test_invoke_scene_is_none(self, scene_from_msg):
         context = self.context
         context['instruments'] = ['spam']
         context['product_list'] = self.prodlist
         context['collection_area_id'] = 'not_in_message'
         context['ignore_foo'] = True
         context['content'] = self.file_msg
-        foo.return_value = None
+        scene_from_msg.return_value = None
         res = self.loader.invoke(context)
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
         self.assertFalse(self.context['lock'].locked())
-        self.assertTrue(foo.called)
+        self.assertTrue(scene_from_msg.called)
 
     @patch('trollflow_sat.satpy_compositor.utils.send_message')
     @patch('trollflow_sat.satpy_compositor.utils.get_monitor_metadata')
     @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
-    def test_invoke_scene_monitor_msg(self, foo, bar, baz):
+    def test_invoke_scene_monitor_msg(self, scene_from_msg,
+                                      get_monitor_metadata, send_message):
         context = self.context
         context['instruments'] = ['spam']
         context['product_list'] = self.prodlist
@@ -159,43 +160,45 @@ class TestSceneLoader(unittest.TestCase):
         context['monitor_topic'] = self.topic
         # Set non-existent collection area ID
         context['content'].data['collection_area_id'] = 'asd'
-        foo.return_value = self.scene
-        bar.return_value = {}
+        scene_from_msg.return_value = self.scene
+        get_monitor_metadata.return_value = {}
 
         res = self.loader.invoke(context)
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
         self.assertFalse(self.context['lock'].locked())
-        self.assertTrue(foo.called)
+        self.assertTrue(scene_from_msg.called)
         metadata = METADATA_FILE.copy()
         metadata['collection_area_id'] = 'asd'
-        bar.assert_has_calls([call(metadata,
-                                    status='start', service=None),
-                              call(metadata,
-                                    status='completed', service=None)])
-        baz.assert_has_calls([call(self.topic, 'monitor', {}, nameservers=None,
-                                   port=0),
-                              call(self.topic, 'monitor', {}, nameservers=None,
-                                   port=0)])
+        get_monitor_metadata.assert_has_calls([call(metadata,
+                                                    status='start',
+                                                    service=None),
+                                               call(metadata,
+                                                    status='completed',
+                                                    service=None)])
+        send_message.assert_has_calls([call(self.topic, 'monitor', {},
+                                            nameservers=None, port=0),
+                                       call(self.topic, 'monitor', {},
+                                            nameservers=None, port=0)])
         self.assertIsNone(self.output_queue.get(timeout=1))
 
     @patch('trollflow_sat.satpy_compositor.SceneLoader.load_composites')
     @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
-    def test_invoke_scene(self, foo, bar):
+    def test_invoke_scene(self, scene_from_msg, load_composites):
         context = self.context
         context['instruments'] = ['spam']
         context['product_list'] = self.prodlist
         context['content'] = self.file_msg
         context['use_lock'] = True
-        foo.return_value = self.scene
-        bar.return_value = {}
+        scene_from_msg.return_value = self.scene
+        load_composites.return_value = {}
 
         res = self.loader.invoke(context)
         self.assertIsNone(res)
         self.assertFalse(self.context['prev_lock'].locked())
         self.assertFalse(self.context['lock'].locked())
-        self.assertTrue(foo.called)
-        self.assertTrue(bar.called)
+        self.assertTrue(scene_from_msg.called)
+        self.assertTrue(load_composites.called)
         self.assertIsNotNone(self.output_queue.get(timeout=1))
 
     def test_post_invoke(self):
@@ -212,14 +215,12 @@ class TestSceneLoader(unittest.TestCase):
 
         # Unconfigured instrument
         msg = deepcopy(self.file_msg)
-        res = self.loader.create_scene_from_message(msg, ['eggs'],
-                                                    None)
+        res = self.loader.create_scene_from_message(msg, ['eggs'], None)
         self.assertIsNone(res)
 
         # Proper file message
         msg = deepcopy(self.file_msg)
-        res = self.loader.create_scene_from_message(msg, ['sensor1'],
-                                                    None)
+        res = self.loader.create_scene_from_message(msg, ['sensor1'], None)
         self.assertEqual(res.attrs, METADATA_FILE)
 
     @patch('trollflow_sat.satpy_compositor.Scene')
