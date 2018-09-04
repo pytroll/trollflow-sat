@@ -17,6 +17,10 @@
 """Helper utils for unit tests."""
 
 import datetime as dt
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
 
 PRODUCT_LIST = {
     "product_list": {
@@ -72,3 +76,24 @@ def write_yaml(data):
         yaml.dump(data, fid)
 
     return fname
+
+
+class MockScene(object):
+
+    def __init__(self, filenames=None, reader=None, datasets=None, attrs=None):
+        self.filenames = filenames or []
+        self.reader = reader or []
+        self.datasets = datasets or {}
+        self.attrs = attrs or {}
+
+    def load(self, names):
+        for name in names:
+            dset = Mock(name=name)
+            self.datasets[dset] = None
+
+    def unload(self, names):
+        datasets = self.datasets.copy()
+        for name in names:
+            for dset in datasets:
+                if dset.name == name:
+                    self.datasets.pop(dset, None)

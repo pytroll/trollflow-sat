@@ -27,28 +27,7 @@ from trollflow_sat.satpy_compositor import SceneLoader
 from trollflow_sat.tests.utils import (write_yaml, PRODUCT_LIST,
                                        METADATA_FILE, METADATA_DATASET,
                                        METADATA_COLLECTION,
-                                       METADATA_COLLECTION_DATASET)
-
-
-class MockScene(object):
-
-    def __init__(self, filenames=None, reader=None, datasets=None, attrs=None):
-        self.filenames = filenames or []
-        self.reader = reader or []
-        self.datasets = datasets or {}
-        self.attrs = attrs or {}
-
-    def load(self, names):
-        for name in names:
-            dset = Mock(name=name)
-            self.datasets[dset] = None
-
-    def unload(self, names):
-        datasets = self.datasets.copy()
-        for name in names:
-            for dset in datasets:
-                if dset.name == name:
-                    self.datasets.pop(dset, None)
+                                       METADATA_COLLECTION_DATASET, MockScene)
 
 
 class TestSceneLoader(unittest.TestCase):
