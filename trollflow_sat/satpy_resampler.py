@@ -85,10 +85,7 @@ class Resampler(AbstractWorkflowComponent):
         prod_list = product_config["product_list"]
 
         # Overpass for coverage calculations
-        try:
-            scn_metadata = glbl.attrs
-        except AttributeError:
-            scn_metadata = glbl.info
+        scn_metadata = glbl.attrs
         if product_config['common'].get('coverage_check', True) and Pass:
             overpass = Pass(scn_metadata['platform_name'],
                             scn_metadata['start_time'],
