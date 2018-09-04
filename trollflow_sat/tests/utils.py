@@ -41,12 +41,64 @@ PRODUCT_LIST = {
     }
 }
 
+PRODUCT_LIST_SATPROJ = {
+    "common": {},
+    "product_list": {
+        "satproj":
+        {
+            "areaname": "satproj",
+            "products":
+            {
+                "overview":
+                {
+                    "productname": "overview",
+                    "fname_pattern": "pattern",
+                    "formats": [{"format": "tif", "writer": None}]
+                }
+            }
+        }
+    }
+}
+
+PRODUCT_LIST_TWO_AREAS = {
+    "common": {},
+    "product_list": {
+        "area1":
+        {
+            "areaname": "areaname1",
+            "products":
+            {
+                "overview":
+                {
+                    "productname": "overview",
+                    "fname_pattern": "pattern",
+                    "formats": [{"format": "tif", "writer": None}]
+                }
+            }
+        },
+        "area2":
+        {
+            "areaname": "areaname2",
+            "products":
+            {
+                "overview":
+                {
+                    "productname": "overview",
+                    "fname_pattern": "pattern",
+                    "formats": [{"format": "tif", "writer": None}]
+                }
+            }
+        }
+    }
+}
+
 FILE1 = "/path/to/data1.file"
 FILE2 = "/path/to/data2.file"
 METADATA_FILE = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
                  "end_time": dt.datetime(2018, 8, 31, 12, 15),
                  "sensor": "sensor1",
-                 "uri": FILE1
+                 "uri": FILE1,
+                 "platform_name": "platform1"
                 }
 METADATA_DATASET = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
                     "end_time": dt.datetime(2018, 8, 31, 12, 15),
