@@ -24,50 +24,10 @@ except ImportError:
 import datetime as dt
 
 from trollflow_sat.satpy_compositor import SceneLoader
-
-PRODUCT_LIST = {
-    "product_list": {
-        "area1":
-        {
-            "areaname": "areaname1",
-            "products":
-            {
-                "overview":
-                {
-                    "productname": "overview",
-                    "fname_pattern": "pattern",
-                    "formats": [{"format": "tif", "writer": None}]
-                }
-            }
-        }
-    }
-}
-
-FILE1 = "/path/to/data1.file"
-FILE2 = "/path/to/data2.file"
-METADATA_FILE = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
-                 "end_time": dt.datetime(2018, 8, 31, 12, 15),
-                 "sensor": "sensor1",
-                 "uri": FILE1
-                }
-METADATA_DATASET = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
-                    "end_time": dt.datetime(2018, 8, 31, 12, 15),
-                    "sensor": "sensor1",
-                    "dataset": [{"uri": FILE1},
-                                {"uri": FILE2}]
-                   }
-METADATA_COLLECTION = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
-                       "end_time": dt.datetime(2018, 8, 31, 12, 15),
-                       "sensor": "sensor1",
-                       "collection": [{"uri": FILE1},
-                                      {"uri": FILE2}]
-                      }
-METADATA_COLLECTION_DATASET = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
-                               "end_time": dt.datetime(2018, 8, 31, 12, 15),
-                               "sensor": "sensor1",
-                               "collection": [{"dataset": [{"uri": FILE1},
-                                                           {"uri": FILE2}]}]
-                      }
+from trollflow_sat.tests.utils import (write_yaml, PRODUCT_LIST,
+                                       METADATA_FILE, METADATA_DATASET,
+                                       METADATA_COLLECTION,
+                                       METADATA_COLLECTION_DATASET)
 
 
 class MockScene(object):
@@ -276,17 +236,6 @@ class TestSceneLoader(unittest.TestCase):
         bad_sunzen_range_satpy.return_value = False
         self.loader.load_composites(glbl_data, PRODUCT_LIST, 'area1')
         self.assertEqual(len(glbl_data.datasets), 1)
-
-
-def write_yaml(data):
-    import yaml
-    import tempfile
-
-    fname = tempfile.mktemp(suffix='.yaml')
-    with open(fname, 'w') as fid:
-        yaml.dump(data, fid)
-
-    return fname
 
 
 def suite():
