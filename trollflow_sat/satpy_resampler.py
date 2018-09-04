@@ -120,28 +120,19 @@ class Resampler(AbstractWorkflowComponent):
                 self.logger.debug("Resampler acquires own lock %s",
                                   str(context["lock"]))
                 utils.acquire_lock(context["lock"])
-            # if area_id not in glbl.info["areas"]:
-            #     utils.release_locks([context["lock"]])
-            #     continue
 
             if area_id == "satproj":
                 self.logger.info("Using satellite projection")
                 lcl = glbl
             else:
-                try:
-                    metadata = glbl.attrs
-                except AttributeError:
-                    metadata = glbl.info
+                metadata = glbl.attrs
                 self.logger.info("Resampling time slot %s to area %s",
                                  metadata["start_time"], area_id)
                 lcl = glbl.resample(area_id, **kwargs)
 
             # Add area ID to the scene attributes so everything needed
             # in filename composing is in the same dictionary
-            try:
-                lcl.attrs["area_id"] = area_id
-            except AttributeError:
-                lcl.info["area_id"] = area_id
+            lcl.attrs["area_id"] = area_id
 
             metadata = extra_metadata.copy()
             metadata["product_config"] = product_config
