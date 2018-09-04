@@ -97,3 +97,6 @@ class MockScene(object):
             for dset in datasets:
                 if dset.name == name:
                     self.datasets.pop(dset, None)
+
+    def resample(self, area_id, **kwargs):
+        return MockScene()
