@@ -23,6 +23,7 @@ except ImportError:
     from mock import Mock
 
 PRODUCT_LIST = {
+    "common": {},
     "product_list": {
         "area1":
         {
