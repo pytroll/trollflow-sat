@@ -46,7 +46,10 @@ class TestResampler(unittest.TestCase):
         self.prodlist_two_areas = write_yaml(PRODUCT_LIST_TWO_AREAS)
 
     def tearDown(self):
-        pass
+        import os
+        os.remove(self.prodlist)
+        os.remove(self.prodlist_satproj)
+        os.remove(self.prodlist_two_areas)
 
     def test_init(self):
         self.assertFalse(self.resampler.use_lock)
