@@ -29,7 +29,7 @@ class DataWriterContainer(object):
         self.output_queue = None
         self.thread = None
         self.use_lock = use_lock
-        self._save_settings = save_settings
+        self._save_settings = save_settings or {}
         self._topic = topic
         self._port = port
         self._nameservers = nameservers
