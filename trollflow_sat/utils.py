@@ -92,7 +92,7 @@ def create_fnames(info, product_config, prod_id):
             break
 
     if time_name is None and "time" in pattern:
-        return None
+        return None, None
 
     # Adjust filename pattern so that time_name is present.
     # Get parse definitions and try to figure out if there's
