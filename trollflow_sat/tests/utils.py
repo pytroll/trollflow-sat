@@ -17,80 +17,82 @@
 """Helper utils for unit tests."""
 
 import datetime as dt
+from collections import OrderedDict
+from copy import deepcopy
 try:
     from unittest.mock import Mock
 except ImportError:
     from mock import Mock
 
-PRODUCT_LIST = {
+PRODUCT_LIST = OrderedDict({
     "common": {},
-    "product_list": {
+    "product_list": OrderedDict({
         "area1":
-        {
+        OrderedDict({
             "areaname": "areaname1",
             "products":
-            {
+            OrderedDict({
                 "overview":
-                {
+                OrderedDict({
                     "productname": "overview",
                     "fname_pattern": "pattern",
                     "formats": [{"format": "tif", "writer": None}]
-                }
-            }
-        }
-    }
-}
+                })
+            })
+        })
+    })
+})
 
-PRODUCT_LIST_SATPROJ = {
+PRODUCT_LIST_SATPROJ = OrderedDict({
     "common": {},
-    "product_list": {
+    "product_list": OrderedDict({
         "satproj":
-        {
+        OrderedDict({
             "areaname": "satproj",
             "products":
-            {
+            OrderedDict({
                 "overview":
-                {
+                OrderedDict({
                     "productname": "overview",
                     "fname_pattern": "pattern",
                     "formats": [{"format": "tif", "writer": None}]
-                }
-            }
-        }
-    }
-}
+                })
+            })
+        })
+    })
+})
 
-PRODUCT_LIST_TWO_AREAS = {
+PRODUCT_LIST_TWO_AREAS = OrderedDict({
     "common": {},
-    "product_list": {
+    "product_list": OrderedDict({
         "area1":
-        {
+        OrderedDict({
             "areaname": "areaname1",
             "products":
-            {
+            OrderedDict({
                 "overview":
-                {
+                OrderedDict({
                     "productname": "overview",
                     "fname_pattern": "pattern",
                     "formats": [{"format": "tif", "writer": None}]
-                }
-            }
-        },
+                })
+            })
+        }),
         "area2":
-        {
+        OrderedDict({
             "areaname": "areaname2",
             "products":
-            {
+            OrderedDict({
                 "overview":
-                {
+                OrderedDict({
                     "productname": "overview",
                     "fname_pattern": "pattern",
                     "formats": [{"format": "tif", "writer": None}]
-                }
-            }
-        }
-    }
-}
+                })
+            })
+        })
+    })
+})
 
 FILE1 = "/path/to/data1.file"
 FILE2 = "/path/to/data2.file"
@@ -131,18 +133,24 @@ def write_yaml(data):
     return fname
 
 
-class MockScene(object):
+class MockDset(object):
+
+    def __init__(self, name, attrs=None):
+        self.name = name
+        self.attrs = attrs or {}
+
+class MockScene(OrderedDict):
 
     def __init__(self, filenames=None, reader=None, datasets=None, attrs=None):
         self.filenames = filenames or []
         self.reader = reader or []
-        self.datasets = datasets or {}
+        self.datasets = datasets or OrderedDict({})
         self.attrs = attrs or {}
 
     def load(self, names):
         for name in names:
-            dset = Mock(name=name)
-            self.datasets[dset] = None
+            dset = MockDset(name, attrs=self.attrs)
+            self.datasets[dset] = dset
 
     def unload(self, names):
         datasets = self.datasets.copy()
@@ -152,4 +160,22 @@ class MockScene(object):
                     self.datasets.pop(dset, None)
 
     def resample(self, area_id, **kwargs):
-        return MockScene()
+        return deepcopy(self)
+
+    def keys(self):
+        return self.datasets.keys()
+        # keys = sorted(self.datasets.keys())
+        # return (k.name for k in keys)
+
+    def __iter__(self):
+        for x in self.datasets.values():
+            yield x
+
+    def __getitem__(self, idx):
+        for itm in self.datasets:
+            if itm.name == idx:
+                return itm
+        raise IndexError
+
+    def save_datasets(self, datasets=None, **kwargs):
+        return MockDset(datasets[0], self.attrs)
