@@ -4,10 +4,9 @@ Trollduction using satpy"""
 import logging
 import time
 
-import yaml
-
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
+from trollflow.utils import ordered_load
 try:
     from trollsched.satpass import Pass
 except ImportError:
@@ -59,7 +58,7 @@ class Resampler(AbstractWorkflowComponent):
         extra_metadata = context["content"]["extra_metadata"]
 
         with open(context["product_list"], "r") as fid:
-            product_config = yaml.load(fid)
+            product_config = ordered_load(fid)
 
         # Handle config options
         kwargs = {}

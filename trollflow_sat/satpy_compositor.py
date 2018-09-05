@@ -5,12 +5,12 @@ import logging
 import time
 from copy import deepcopy
 
-import yaml
 from six.moves.urllib.parse import urlparse
 
 from satpy import Scene
 from trollflow.workflow_component import AbstractWorkflowComponent
 from trollflow_sat import utils
+from trollflow.utils import ordered_load
 
 
 class SceneLoader(AbstractWorkflowComponent):
@@ -49,7 +49,7 @@ class SceneLoader(AbstractWorkflowComponent):
         readers = context.get("readers", None)
 
         with open(context["product_list"], "r") as fid:
-            product_config = yaml.load(fid)
+            product_config = ordered_load(fid)
         msg = deepcopy(context['content'])
         for key, val in context.items():
             if key.startswith('ignore_') and val is True:
