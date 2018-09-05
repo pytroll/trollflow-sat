@@ -88,7 +88,8 @@ class DataWriterContainer(object):
         '''Stop writer.'''
         self.logger.debug("Stopping writer.")
         self.writer.stop()
-        self.thread.join()
+        if self.thread is not None:
+            self.thread.join()
         self.logger.debug("Writer stopped.")
         self.thread = None
 
@@ -167,6 +168,7 @@ class DataWriter(Thread):
 
                     # After all the items have been processed, release the
                     # lock for the previous worker
+
                     if self.prev_lock is not None:
                         utils.release_locks([self.prev_lock],
                                             self.logger.debug,
