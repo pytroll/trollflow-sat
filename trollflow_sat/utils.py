@@ -160,14 +160,11 @@ def bad_sunzen_range(product_config, area_id, composite, start_time):
     except KeyError:
         pass
 
-    try:
-        limit = product_conf["sunzen_day_maximum"]
-        if sunzen > limit:
-            return True
-        else:
-            return False
-    except KeyError:
-        pass
+    limit = product_conf["sunzen_day_maximum"]
+    if sunzen > limit:
+        return True
+    else:
+        return False
 
 
 def send_message(topic, msg_type, msg_data, nameservers=None, port=0):
