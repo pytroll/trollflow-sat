@@ -258,8 +258,7 @@ def covers(overpass, area_name, min_coverage, logger):
 
 def select_dict_items(src_dict, selection):
     """Creates a new dictionary containing elements listed in selection"""
-    to_send = dict(src_dict) if '*' \
-        in selection else {}
+    to_send = dict(src_dict) if '*' in selection else {}
 
     for dest_key in selection:
         if dest_key != '*':
