@@ -201,10 +201,10 @@ class TestSceneLoader(unittest.TestCase):
         self.assertEqual(res.attrs, METADATA_COLLECTION_DATASET)
 
     @patch('trollflow_sat.satpy_compositor.utils.bad_sunzen_range')
-    def test_load_composites(self, bad_sunzen_range_satpy):
+    def test_load_composites(self, bad_sunzen_range):
         # Check for unload
         glbl_data = MockScene(attrs=METADATA_FILE)
-        bad_sunzen_range_satpy.return_value = True
+        bad_sunzen_range.return_value = True
         dset = Mock(name='overview')
         glbl_data.datasets[dset] = None
         self.loader.load_composites(glbl_data, PRODUCT_LIST, 'area1')
@@ -212,7 +212,7 @@ class TestSceneLoader(unittest.TestCase):
 
         # Check for load
         glbl_data = MockScene(attrs=METADATA_FILE)
-        bad_sunzen_range_satpy.return_value = False
+        bad_sunzen_range.return_value = False
         self.loader.load_composites(glbl_data, PRODUCT_LIST, 'area1')
         self.assertEqual(len(glbl_data.datasets), 1)
 
