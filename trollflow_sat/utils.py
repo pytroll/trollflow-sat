@@ -30,19 +30,6 @@ FORMAT_DEFAULTS = {'writer': 'geotiff',
 LOGGER = logging.getLogger(__name__)
 
 
-def get_prerequisites_yaml(global_data, prod_list, area_list):
-    """Get composite prerequisite channels for a list of areas"""
-    reqs = set()
-    for area in area_list:
-        for prod_id in prod_list[area]["products"]:
-            try:
-                composite = getattr(global_data.image, prod_id)
-            except AttributeError:
-                continue
-            reqs |= composite.prerequisites
-    return reqs
-
-
 def create_fnames(info, product_config, prod_id):
     """Create filename for product *prod*"""
     area_id = info["area_id"]
@@ -138,25 +125,9 @@ def get_format_settings(product_config, prod_id, area_id):
     return settings
 
 
-def get_satpy_area_composite_names(product_config, area_id):
-    """Parse composite names from the product config for the given
-    area."""
-    prod_list = product_config['product_list']
-    return prod_list[area_id]['products'].keys()
-
-
-def find_time_name(info):
-    """Try to find the name for 'nominal' time"""
-    for key in info:
-        if "time" in key and "end" not in key and "proc" not in key:
-            return key
-    return None
-
-
 def bad_sunzen_range_satpy(product_config, area_id, composite, start_time):
     """Check if Sun zenith angle is valid at the configured location.
     SatPy version.
-    TODO: refactor with bad_sunzen_range()
     """
     product_conf = \
         product_config["product_list"][area_id]["products"][composite]
@@ -178,67 +149,6 @@ def bad_sunzen_range_satpy(product_config, area_id, composite, start_time):
     lon = product_conf["sunzen_lon"]
     lat = product_conf["sunzen_lat"]
     sunzen = astronomy.sun_zenith_angle(start_time, lon, lat)
-    LOGGER.debug("Sun zenith angle is %.2f degrees", sunzen)
-
-    try:
-        limit = product_conf["sunzen_night_minimum"]
-        if sunzen < limit:
-            return True
-        else:
-            return False
-    except KeyError:
-        pass
-
-    try:
-        limit = product_conf["sunzen_day_maximum"]
-        if sunzen > limit:
-            return True
-        else:
-            return False
-    except KeyError:
-        pass
-
-
-def bad_sunzen_range(area, product_config, area_id, prod, time_slot):
-    """Check if Sun zenith angle is valid at the configured location."""
-    product_conf = product_config["product_list"][area_id]["products"][prod]
-
-    if ("sunzen_night_minimum" not in product_conf and
-            "sunzen_day_maximum" not in product_conf):
-        return False
-
-    if astronomy is None:
-        LOGGER.warning("Pyorbital not installed, unable to calculate "
-                       "Sun zenith angles!")
-        return False
-
-    if area.lons is None:
-        area.lons, area.lats = area.get_lonlats()
-
-    lon, lat = None, None
-
-    try:
-        lon = product_conf["sunzen_lon"]
-        lat = product_conf["sunzen_lat"]
-    except KeyError:
-        pass
-
-    if lon is None or lat is None:
-        try:
-            x_idx = product_conf["sunzen_x_idx"]
-            y_idx = product_conf["sunzen_y_idx"]
-            lon = area.lons[x_idx]
-            lat = area.lats[y_idx]
-        except KeyError:
-            pass
-
-    if lon is None or lat is None:
-        LOGGER.info("Using area center for Sun zenith angle calculation")
-        y_idx = int(area.y_size / 2)
-        x_idx = int(area.x_size / 2)
-        lon, lat = area.get_lonlat(y_idx, x_idx)
-
-    sunzen = astronomy.sun_zenith_angle(time_slot, lon, lat)
     LOGGER.debug("Sun zenith angle is %.2f degrees", sunzen)
 
     try:
