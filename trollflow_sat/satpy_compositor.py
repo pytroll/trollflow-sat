@@ -219,7 +219,7 @@ class SceneLoader(AbstractWorkflowComponent):
 
         # Check for Sun zenith angle limits
         for composite in all_composites:
-            if utils.bad_sunzen_range_satpy(
+            if utils.bad_sunzen_range(
                     product_config,
                     area_id, composite,
                     start_time):

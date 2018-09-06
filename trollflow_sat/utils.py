@@ -125,7 +125,7 @@ def get_format_settings(product_config, prod_id, area_id):
     return settings
 
 
-def bad_sunzen_range_satpy(product_config, area_id, composite, start_time):
+def bad_sunzen_range(product_config, area_id, composite, start_time):
     """Check if Sun zenith angle is valid at the configured location.
     SatPy version.
     """
