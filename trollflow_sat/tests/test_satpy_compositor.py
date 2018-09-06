@@ -200,7 +200,7 @@ class TestSceneLoader(unittest.TestCase):
                                                 ['sensor1'], None)
         self.assertEqual(res.attrs, METADATA_COLLECTION_DATASET)
 
-    @patch('trollflow_sat.satpy_compositor.utils.bad_sunzen_range_satpy')
+    @patch('trollflow_sat.satpy_compositor.utils.bad_sunzen_range')
     def test_load_composites(self, bad_sunzen_range_satpy):
         # Check for unload
         glbl_data = MockScene(attrs=METADATA_FILE)
