@@ -64,7 +64,7 @@ class TestResampler(unittest.TestCase):
         context['use_lock'] = True
         context['content'] = None
         self.resampler.invoke(context)
-        self.assertEqual(context['output_queue'].qsize(), 0)
+        self.assertEqual(context['output_queue'].qsize(), 1)
         self.assertIsNone(context['output_queue'].get(timeout=1))
         self.assertTrue(acquire.called)
         self.assertTrue(release.called)
