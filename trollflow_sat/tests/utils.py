@@ -94,6 +94,39 @@ PRODUCT_LIST_TWO_AREAS = OrderedDict({
     })
 })
 
+
+PRODUCT_LIST_TWO_AREAS_TOGETHER = OrderedDict({
+    "common": {"process_by_area": False},
+    "product_list": OrderedDict({
+        "area1":
+        OrderedDict({
+            "areaname": "areaname1",
+            "products":
+            OrderedDict({
+                "overview":
+                OrderedDict({
+                    "productname": "overview",
+                    "fname_pattern": "pattern",
+                    "formats": [{"format": "tif", "writer": None}]
+                })
+            })
+        }),
+        "area2":
+        OrderedDict({
+            "areaname": "areaname2",
+            "products":
+            OrderedDict({
+                "overview":
+                OrderedDict({
+                    "productname": "overview",
+                    "fname_pattern": "pattern",
+                    "formats": [{"format": "tif", "writer": None}]
+                })
+            })
+        })
+    })
+})
+
 FILE1 = "/path/to/data1.file"
 FILE2 = "/path/to/data2.file"
 METADATA_FILE = {"start_time": dt.datetime(2018, 8, 31, 12, 0),
