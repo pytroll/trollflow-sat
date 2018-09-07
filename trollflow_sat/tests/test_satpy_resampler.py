@@ -64,6 +64,7 @@ class TestResampler(unittest.TestCase):
         context['use_lock'] = True
         context['content'] = None
         self.resampler.invoke(context)
+        self.assertEqual(context['output_queue'].qsize(), 0)
         self.assertIsNone(context['output_queue'].get(timeout=1))
         self.assertTrue(acquire.called)
         self.assertTrue(release.called)
@@ -75,7 +76,7 @@ class TestResampler(unittest.TestCase):
         scene = MockScene(attrs=METADATA_FILE)
         context = self.context
         context['content'] = {'scene': scene,
-                              'extra_metadata': {'eggs': 'spam'}}
+                              'extra_metadata': {'area_id': 'area1'}}
         context['product_list'] = self.prodlist
         covers.return_value = False
 
@@ -90,7 +91,7 @@ class TestResampler(unittest.TestCase):
         scene = MockScene(attrs=METADATA_FILE)
         context = self.context
         context['content'] = {'scene': scene,
-                              'extra_metadata': {'eggs': 'spam'}}
+                              'extra_metadata': {'area_id': 'area1'}}
         context['product_list'] = self.prodlist
         context['process_by_area'] = True
         context['use_lock'] = True
@@ -108,7 +109,7 @@ class TestResampler(unittest.TestCase):
         scene = MockScene(attrs=METADATA_FILE)
         context = self.context
         context['content'] = {'scene': scene,
-                              'extra_metadata': {'eggs': 'spam'}}
+                              'extra_metadata': {'area_id': 'satproj'}}
         context['product_list'] = self.prodlist_satproj
         context['process_by_area'] = True
         context['use_lock'] = True
@@ -128,7 +129,7 @@ class TestResampler(unittest.TestCase):
         scene = MockScene(attrs=METADATA_FILE)
         context = self.context
         context['content'] = {'scene': scene,
-                              'extra_metadata': {'eggs': 'spam'}}
+                              'extra_metadata': {'area_id': 'area1'}}
         context['product_list'] = self.prodlist
         context['process_by_area'] = True
         Pass.return_value = None
@@ -136,45 +137,6 @@ class TestResampler(unittest.TestCase):
         self.resampler.invoke(context)
         self.assertFalse(any(covers.mock_calls))
         self.assertIsNotNone(context['output_queue'].get(timeout=1))
-
-    @patch('trollflow_sat.satpy_resampler.utils.covers')
-    @patch('trollflow_sat.satpy_resampler.Pass')
-    def test_invoke_two_areas_by_area(self, Pass, covers):
-        scene = MockScene(attrs=METADATA_FILE)
-        context = self.context
-        context['content'] = {'scene': scene,
-                              'extra_metadata': {'eggs': 'spam'}}
-        context['product_list'] = self.prodlist_two_areas
-        context['process_by_area'] = True
-        self.resampler.invoke(context)
-        # Every second item should be None
-        res = context['output_queue'].get(timeout=1)
-        self.assertTrue(res['scene'].attrs['area_id'] == 'area1')
-        res = context['output_queue'].get(timeout=1)
-        self.assertIsNone(res)
-        res = context['output_queue'].get(timeout=1)
-        self.assertTrue(res['scene'].attrs['area_id'] == 'area2')
-        res = context['output_queue'].get(timeout=1)
-        self.assertIsNone(res)
-        self.assertEqual(context['output_queue'].qsize(), 0)
-
-    @patch('trollflow_sat.satpy_resampler.utils.covers')
-    @patch('trollflow_sat.satpy_resampler.Pass')
-    def test_invoke_two_areas_together(self, Pass, covers):
-        scene = MockScene(attrs=METADATA_FILE)
-        context = self.context
-        context['content'] = {'scene': scene,
-                              'extra_metadata': {'eggs': 'spam'}}
-        context['product_list'] = self.prodlist_two_areas
-        context['process_by_area'] = False
-
-        self.resampler.invoke(context)
-        # Only Scene objects in the queue
-        res = context['output_queue'].get(timeout=1)
-        self.assertTrue(res['scene'].attrs['area_id'] == 'area1')
-        res = context['output_queue'].get(timeout=1)
-        self.assertTrue(res['scene'].attrs['area_id'] == 'area2')
-        self.assertEqual(context['output_queue'].qsize(), 0)
 
     def test_post_invoke(self):
         self.assertIsNone(self.resampler.post_invoke())

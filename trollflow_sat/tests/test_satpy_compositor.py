@@ -25,6 +25,8 @@ import datetime as dt
 
 from trollflow_sat.satpy_compositor import SceneLoader
 from trollflow_sat.tests.utils import (write_yaml, PRODUCT_LIST,
+                                       PRODUCT_LIST_TWO_AREAS,
+                                       PRODUCT_LIST_TWO_AREAS_TOGETHER,
                                        METADATA_FILE, METADATA_DATASET,
                                        METADATA_COLLECTION,
                                        METADATA_COLLECTION_DATASET, MockScene)
@@ -39,6 +41,8 @@ class TestSceneLoader(unittest.TestCase):
 
         self.loader = SceneLoader()
         self.prodlist = write_yaml(PRODUCT_LIST)
+        self.prodlist_2 = write_yaml(PRODUCT_LIST_TWO_AREAS)
+        self.prodlist_2_together = write_yaml(PRODUCT_LIST_TWO_AREAS_TOGETHER)
         self.lock = Lock()
         self.prev_lock = Lock()
         self.output_queue = queue.Queue()
@@ -119,7 +123,8 @@ class TestSceneLoader(unittest.TestCase):
                                             nameservers=None, port=0),
                                        call(self.topic, 'monitor', {},
                                             nameservers=None, port=0)])
-        self.assertIsNone(self.output_queue.get(timeout=1))
+        # Nothing has been put into the output queue
+        self.assertEqual(self.output_queue.qsize(), 0)
 
     @patch('trollflow_sat.satpy_compositor.SceneLoader.load_composites')
     @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
@@ -138,7 +143,37 @@ class TestSceneLoader(unittest.TestCase):
         self.assertFalse(self.context['lock'].locked())
         self.assertTrue(scene_from_msg.called)
         self.assertTrue(load_composites.called)
-        self.assertIsNotNone(self.output_queue.get(timeout=1))
+        # Two items in the queue
+        self.assertEqual(self.output_queue.qsize(), 2)
+        # The first item in the queue is the Scene + metadata dictionary
+        res = self.output_queue.get(timeout=1)
+        self.assertTrue(isinstance(res, dict))
+        # And the second is the terminator `None`
+        res = self.output_queue.get(timeout=1)
+        self.assertIsNone(res)
+
+        # Two areas, there should be "{scene, meta}, None, {scene, meta}, None"
+        # in the queue
+        context['product_list'] = self.prodlist_2
+        _ = self.loader.invoke(context)
+        self.assertEqual(self.output_queue.qsize(), 4)
+        for _ in range(2):
+            res = self.output_queue.get(timeout=1)
+            self.assertTrue(isinstance(res, dict))
+            res = self.output_queue.get(timeout=1)
+            self.assertIsNone(res)
+
+        # Set process_by_area to False. Now the queue should have
+        # {scene, meta}, {scene, meta}, None
+        context['product_list'] = self.prodlist_2_together
+        _ = self.loader.invoke(context)
+        self.assertEqual(self.output_queue.qsize(), 3)
+        res = self.output_queue.get(timeout=1)
+        self.assertTrue(isinstance(res, dict))
+        res = self.output_queue.get(timeout=1)
+        self.assertTrue(isinstance(res, dict))
+        res = self.output_queue.get(timeout=1)
+        self.assertIsNone(res)
 
     def test_post_invoke(self):
         self.assertIsNone(self.loader.post_invoke())
