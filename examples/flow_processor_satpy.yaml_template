@@ -74,8 +74,6 @@ work:
       name: satpy_resampler
       Workflow:
         - trollflow_sat.satpy_resampler.Resampler:
-            # Process each area separately (True) or all together (False)
-            process_by_area: True
 
             # The product list
             product_list: *product_list

@@ -24,6 +24,10 @@ common:
   # For GEO data, disable area coverage check
   # coverage_check: false
 
+  # Process each area separately (default: True) or all together (False)
+  # process_by_area: False
+
+
 # Product list
 product_list:
 
