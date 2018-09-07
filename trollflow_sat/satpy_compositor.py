@@ -81,6 +81,8 @@ class SceneLoader(AbstractWorkflowComponent):
         # use_extern_calib = product_config["common"].get("use_extern_calib",
         #                                                 "False")
 
+        process_by_area = product_config["common"].get("process_by_area",
+                                                       True)
         # Set lock if locking is used
         if self.use_lock:
             self.logger.debug("Compositor acquires own lock %s",
@@ -104,12 +106,17 @@ class SceneLoader(AbstractWorkflowComponent):
                                               area_id)
 
             extra_metadata['products'] = composites
+            extra_metadata['area_id'] = area_id
             context["output_queue"].put({'scene': global_data,
                                          'extra_metadata': extra_metadata})
+            if process_by_area:
+                context["output_queue"].put(None)
+
 
         # Add "terminator" to the queue to trigger computations for
-        # this global scene
-        context["output_queue"].put(None)
+        # this global scene, if not already done
+        if not process_by_area:
+            context["output_queue"].put(None)
 
         if utils.release_locks([context["lock"]]):
             self.logger.debug("Compositor releases own lock %s",

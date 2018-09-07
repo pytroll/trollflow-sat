@@ -93,72 +93,72 @@ class Resampler(AbstractWorkflowComponent):
         else:
             overpass = None
 
-        for area_id in prod_list:
-            # Check for area coverage
-            if overpass is not None:
-                min_coverage = prod_list[area_id].get("min_coverage", 0.0)
-                if not utils.covers(overpass, area_id, min_coverage,
-                                    self.logger):
-                    continue
+        # Get the area ID from metadata dict
+        area_id = extra_metadata['area_id']
 
-            kwargs['radius_of_influence'] = None
-            try:
-                area_config = product_config["product_list"][area_id]
-                kwargs['radius_of_influence'] = \
-                    area_config.get("srch_radius", context["radius"])
-            except (AttributeError, KeyError):
-                kwargs['radius_of_influence'] = 10000.
+        # Check for area coverage
+        if overpass is not None:
+            min_coverage = prod_list[area_id].get("min_coverage", 0.0)
+            if not utils.covers(overpass, area_id, min_coverage,
+                                self.logger):
+                return
 
-            if kwargs['radius_of_influence'] is None:
-                self.logger.debug("Using default search radius.")
-            else:
-                self.logger.debug("Using search radius %d meters.",
-                                  int(kwargs['radius_of_influence']))
-            # Set lock if locking is used
-            if self.use_lock:
-                self.logger.debug("Resampler acquires own lock %s",
-                                  str(context["lock"]))
-                utils.acquire_lock(context["lock"])
+        kwargs['radius_of_influence'] = None
+        try:
+            area_config = product_config["product_list"][area_id]
+            kwargs['radius_of_influence'] = \
+                area_config.get("srch_radius", context["radius"])
+        except (AttributeError, KeyError):
+            kwargs['radius_of_influence'] = 10000.
 
-            if area_id == "satproj":
-                self.logger.info("Using satellite projection")
-                lcl = glbl
-            else:
-                metadata = glbl.attrs
-                self.logger.info("Resampling time slot %s to area %s",
-                                 metadata["start_time"], area_id)
-                lcl = glbl.resample(area_id, **kwargs)
+        if kwargs['radius_of_influence'] is None:
+            self.logger.debug("Using default search radius.")
+        else:
+            self.logger.debug("Using search radius %d meters.",
+                              int(kwargs['radius_of_influence']))
+        # Set lock if locking is used
+        if self.use_lock:
+            self.logger.debug("Resampler acquires own lock %s",
+                              str(context["lock"]))
+            utils.acquire_lock(context["lock"])
 
-            # Add area ID to the scene attributes so everything needed
-            # in filename composing is in the same dictionary
-            lcl.attrs["area_id"] = area_id
+        if area_id == "satproj":
+            self.logger.info("Using satellite projection")
+            lcl = glbl
+        else:
+            metadata = glbl.attrs
+            self.logger.info("Resampling time slot %s to area %s",
+                             metadata["start_time"], area_id)
+            lcl = glbl.resample(area_id, **kwargs)
 
-            metadata = extra_metadata.copy()
-            metadata["product_config"] = product_config
-            metadata["products"] = prod_list[area_id]['products']
+        # Add area ID to the scene attributes so everything needed
+        # in filename composing is in the same dictionary
+        lcl.attrs["area_id"] = area_id
 
-            self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
-                              "to writer's queue",
-                              area_id, str(scn_metadata["start_time"]))
-            context["output_queue"].put({'scene': lcl,
-                                         'extra_metadata': metadata})
-            if context["process_by_area"]:
-                context["output_queue"].put(None)
+        metadata = extra_metadata.copy()
+        metadata["product_config"] = product_config
+        metadata["products"] = prod_list[area_id]['products']
 
-            if utils.release_locks([context["lock"]]):
-                self.logger.debug("Resampler releases own lock %s",
-                                  str(context["lock"]))
-                # Wait 1 second to ensure next worker has time to acquire the
-                # lock
-                time.sleep(1)
+        self.logger.debug("Inserting lcl (area: %s, start_time: %s) "
+                          "to writer's queue",
+                          area_id, str(scn_metadata["start_time"]))
+        context["output_queue"].put({'scene': lcl,
+                                     'extra_metadata': metadata})
 
-            # Wait until the lock has been released downstream
-            if self.use_lock:
-                utils.acquire_lock(context["lock"])
-                utils.release_locks([context["lock"]])
+        if utils.release_locks([context["lock"]]):
+            self.logger.debug("Resampler releases own lock %s",
+                              str(context["lock"]))
+            # Wait 1 second to ensure next worker has time to acquire the
+            # lock
+            time.sleep(1)
 
-            del lcl
-            lcl = None
+        # Wait until the lock has been released downstream
+        if self.use_lock:
+            utils.acquire_lock(context["lock"])
+            utils.release_locks([context["lock"]])
+
+        del lcl
+        lcl = None
 
     def post_invoke(self):
         """Post-invoke"""
