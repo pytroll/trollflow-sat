@@ -43,6 +43,11 @@ work:
               - seviri
               - abi
 
+            # Aliases for the instrument names that might be in the incoming
+            #   message.  <msg_instrument_name>: <satpy_instrument_name>
+            # instrument_aliases:
+            #   avhrr/3: avhrr-3
+
             # Several different readers can be configured so the same
             #   instance can be used to process different kinds of data.
             #   By default SatPy will find the reader automatically.

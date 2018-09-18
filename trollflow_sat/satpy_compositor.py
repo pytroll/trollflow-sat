@@ -55,6 +55,15 @@ class SceneLoader(AbstractWorkflowComponent):
             if key.startswith('ignore_') and val is True:
                 msg.data.pop(key[7:], None)
 
+        # Rename the instrument in the message if an alias is given for it
+        instrument_aliases = context.get("instrument_aliases", {})
+        if instrument_aliases:
+            sensor = msg.data['sensor']
+            if isinstance(sensor, list):
+                sensor = sensor[0]
+            sensor = instrument_aliases.get(sensor, sensor)
+            msg.data['sensor'] = sensor
+
         global_data = self.create_scene_from_message(msg, instruments,
                                                      readers=readers)
         if global_data is None:

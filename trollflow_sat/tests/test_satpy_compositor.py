@@ -126,6 +126,24 @@ class TestSceneLoader(unittest.TestCase):
         # Nothing has been put into the output queue
         self.assertEqual(self.output_queue.qsize(), 0)
 
+    @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
+    def test_invoke_instrument_aliases(self, scene_from_msg):
+        context = self.context
+        scene_from_msg.return_value = None
+        context['instruments'] = ['avhrr-3']
+        context['product_list'] = self.prodlist
+        context['content'] = self.file_msg
+        # Alias for existing sensor
+        context['instrument_aliases'] = {'sensor1': 'new_sensor_name'}
+        res = self.loader.invoke(context)
+        self.assertEqual(scene_from_msg.mock_calls[0][1][0].data['sensor'],
+                         'new_sensor_name')
+        # Alias for sensor not in the message -> sensor stays the same
+        context['instrument_aliases'] = {'nonexistent_sensor': 'foo'}
+        res = self.loader.invoke(context)
+        self.assertEqual(scene_from_msg.mock_calls[1][1][0].data['sensor'],
+                         'sensor1')
+
     @patch('trollflow_sat.satpy_compositor.SceneLoader.load_composites')
     @patch('trollflow_sat.satpy_compositor.SceneLoader.create_scene_from_message')
     def test_invoke_scene(self, scene_from_msg, load_composites):
