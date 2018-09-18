@@ -58,11 +58,15 @@ class SceneLoader(AbstractWorkflowComponent):
         # Rename the instrument in the message if an alias is given for it
         instrument_aliases = context.get("instrument_aliases", {})
         if instrument_aliases:
-            sensor = msg.data['sensor']
-            if isinstance(sensor, list):
-                sensor = sensor[0]
-            sensor = instrument_aliases.get(sensor, sensor)
-            msg.data['sensor'] = sensor
+            orig_sensor = msg.data['sensor']
+            if isinstance(orig_sensor, list):
+                orig_sensor = orig_sensor[0]
+            sensor = instrument_aliases.get(orig_sensor, orig_sensor)
+            if sensor != orig_sensor:
+                msg.data['sensor'] = sensor
+                self.logger.info(
+                    "Adjusted message instrument name from %s to %s",
+                orig_sensor, sensor)
 
         global_data = self.create_scene_from_message(msg, instruments,
                                                      readers=readers)
