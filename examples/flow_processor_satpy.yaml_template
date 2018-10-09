@@ -123,6 +123,9 @@ work:
               blockxsize: 512
               blockysize: 512
               compress: deflate
+              # Overviews (reduced resolution images) created from the full
+              # resolution data and embedded in the saved (GeoTIFF) files
+              # overviews: [2, 4, 8, 16, 32, 64, 128]
 
             # By default writer doesn't lock the compositor, but that
             #   can be done by setting use_lock to true
