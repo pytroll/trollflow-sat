@@ -297,6 +297,7 @@ def add_overviews(fnames, overviews, logger=None):
     except ImportError:
         if logger is not None:
             logger.error("Can't add overviews, install rasterio")
+        return
 
     if logger is not None:
         logger.info("Adding overviews")
