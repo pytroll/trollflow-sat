@@ -129,18 +129,8 @@ class DataWriter(Thread):
     def run(self):
         """Run the thread."""
         self._loop = True
-        # Parse settings for saving
-        compression = self._save_settings.get('compression', 6)
-        tags = self._save_settings.get('tags', None)
-        fformat = self._save_settings.get('fformat', None)
-        gdal_options = self._save_settings.get('gdal_options', None)
-        blocksize = self._save_settings.get('blocksize', None)
-
-        kwargs = {'compression': compression,
-                  'tags': tags,
-                  'fformat': fformat,
-                  'gdal_options': gdal_options,
-                  'blocksize': blocksize}
+        # Get save settings
+        kwargs = self._save_settings.copy()
 
         # Initialize publisher context
         with Publish("l2producer", port=self._port,
