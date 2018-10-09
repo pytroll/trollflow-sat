@@ -302,8 +302,9 @@ def add_overviews(fnames, overviews, logger=None):
         logger.info("Adding overviews")
 
     for fname in fnames:
-        with rasterio.open(fname, 'r+') as dst:
-            dst.build_overviews(overviews, Resampling.average)
-            dst.update_tags(ns='rio_overview', resampling='average')
-            dst.close()
-
+        try:
+            with rasterio.open(fname, 'r+') as dst:
+                dst.build_overviews(overviews, Resampling.average)
+                dst.update_tags(ns='rio_overview', resampling='average')
+        except rasterio.RasterioIOError:
+            pass
