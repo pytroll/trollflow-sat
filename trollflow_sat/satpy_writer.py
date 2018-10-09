@@ -223,7 +223,7 @@ class DataWriter(Thread):
             # Create delayed writer objects and messages
             for j, fname in enumerate(fnames):
                 dset = lcl.save_datasets(datasets=[prod],
-                                         file_pattern=fname,
+                                         filename=fname,
                                          writer=fmts[j]['writer'],
                                          fill_value=fmts[j]['fill_value'],
                                          compute=False,
