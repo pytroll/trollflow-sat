@@ -181,7 +181,7 @@ class DataWriter(Thread):
         """Add overviews (reduced resolution versions of image data) to the
         files.
         """
-        fnames = [msg.data['uri'] for msg in messages]
+        fnames = [msg.data['uri'] for msg in self.messages]
         overviews = self._save_settings['overviews']
         add_overviews(fnames, overviews, logger=self.logger)
 
@@ -290,7 +290,7 @@ class DataWriter(Thread):
 
 
 def add_overviews(fnames, overviews, logger=None):
-    """"""
+    """Add overviews to given files."""
     try:
         import rasterio
         from rasterio.enums import Resampling
