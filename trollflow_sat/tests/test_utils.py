@@ -17,15 +17,20 @@
 """Unit tests for utils"""
 
 import unittest
-from StringIO import StringIO
+from io import StringIO
 import datetime as dt
+
 from collections import OrderedDict
+try:
+    from unittest.mock import patch, Mock
+except ImportError:
+    from mock import patch, Mock
 
 from trollflow_sat import utils
 from trollflow.utils import ordered_load
 from posttroll.message import Message
 
-CONFIG_MINIMAL = """common:
+CONFIG_MINIMAL = u"""common:
   use_extern_calib: false
 
 groups:
@@ -76,7 +81,7 @@ class TestUtils(unittest.TestCase):
                                                 "image_compositor_name")
         self.assertEqual(fnames[0],
                          "/tmp/2016/11/07/" +
-                         "2016_11_07_12_00_asd.png")
+                         "2016_11_07_12_00_asd.tif")
 
         # Add file formats
         self.config["common"]["formats"] = [OrderedDict([('format', 'png'), ]),
@@ -143,6 +148,127 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(res['sensor'], self.info["sensor"])
         self.assertIsNone(res['orbit_number'])
         self.assertEqual(res['status'], 'foo')
+
+    def test_select_dict_items(self):
+        info = {"a": "a_value", "b": "b_value", "c":
+                [{"c_a": "c1_a_value", "c_b": "c1_b_value"},
+                 {"c_a": "c2_a_value", "c_b": "c2_b_value"}]}
+
+        selection = {'b_new': 'b'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'b_new': 'b_value'})
+
+        selection = {'b_new': 'b', 'b2': 'a'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'b_new': 'b_value', 'b2': 'a_value'})
+
+        selection = {'cXa': '/c/*/c_a', 'a': 'a'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'cXa': ['c1_a_value', 'c2_a_value'],
+                               'a': 'a_value'})
+        selection = [1, 2, 3]
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {1: 1, 2: 2, 3: 3})
+        selection = {'a': '/a'}
+        res = utils.select_dict_items(info, selection)
+        self.assertEqual(res, {'a': 'a_value'})
+
+    def test_get_format_settings(self):
+        from trollflow_sat.tests.utils import PRODUCT_LIST_TWO_AREAS
+        res = utils.get_format_settings(PRODUCT_LIST_TWO_AREAS, 'overview',
+                                        'area2')
+        self.assertTrue('writer' in res[0])
+        self.assertTrue('format' in res[0])
+        self.assertTrue('fill_value' in res[0])
+
+    @patch('trollflow_sat.utils.astronomy.sun_zenith_angle')
+    def test_bad_sunzen_range(self, sun_zenith_angle):
+        from trollflow_sat.tests.utils import PRODUCT_LIST_TWO_AREAS
+        prod_conf = PRODUCT_LIST_TWO_AREAS.copy()
+        # No sunzen limits configured
+        res = utils.bad_sunzen_range(prod_conf, 'area2',
+                                     'overview', 'start_time')
+        self.assertFalse(res)
+        # Limit given for night product
+        prod_conf = PRODUCT_LIST_TWO_AREAS.copy()
+        prod = prod_conf['product_list']['area2']['products']['overview']
+        prod['sunzen_night_minimum'] = 90.
+        prod['sunzen_lon'] = 0.
+        prod['sunzen_lat'] = 0.
+        sun_zenith_angle.return_value = 85.
+        res = utils.bad_sunzen_range(prod_conf, 'area2',
+                                     'overview', 'start_time')
+        self.assertTrue(sun_zenith_angle.called)
+        self.assertTrue(res)
+        sun_zenith_angle.return_value = 95.
+        res = utils.bad_sunzen_range(prod_conf, 'area2',
+                                     'overview', 'start_time')
+        self.assertFalse(res)
+        # Limit given for day product
+        del prod['sunzen_night_minimum']
+        prod['sunzen_day_maximum'] = 90.
+        sun_zenith_angle.return_value = 95.
+        res = utils.bad_sunzen_range(prod_conf, 'area2',
+                                     'overview', 'start_time')
+        self.assertTrue(res)
+        sun_zenith_angle.return_value = 85.
+        res = utils.bad_sunzen_range(prod_conf, 'area2',
+                                     'overview', 'start_time')
+        self.assertFalse(res)
+        # No limits given
+        del prod['sunzen_day_maximum']
+        res = utils.bad_sunzen_range(prod_conf, 'area2',
+                                     'overview', 'start_time')
+        self.assertFalse(res)
+
+    @patch('trollflow_sat.utils.Publish')
+    def test_send_message(self, Publish):
+        pub = Mock()
+        Publish.return_value.__enter__.return_value = pub
+        utils.send_message('topic', 'file', {}, nameservers=None)
+        self.assertTrue(pub.send.called)
+        pub = Mock()
+        Publish.return_value.__enter__.return_value = pub
+        utils.send_message('topic', 'file', {}, nameservers='foo')
+        self.assertTrue(pub.send.called)
+
+    @patch('trollflow_sat.utils.release_lock')
+    def test_release_locks(self, release_lock):
+        release_lock.return_value = 1
+        log = Mock()
+        lock = None
+        res = utils.release_locks(lock, log=None, log_msg=None)
+        self.assertTrue(release_lock.called)
+        res = utils.release_locks(lock, log=log, log_msg=None)
+        self.assertFalse(log.called)
+        res = utils.release_locks(lock, log=log, log_msg='message')
+        self.assertTrue(log.called)
+
+    @patch('trollflow_sat.utils.trollflow_acquire_lock')
+    def test_acquire_lock(self, trollflow_acquire_lock):
+        trollflow_acquire_lock.return_value = 'foo'
+        res = utils.acquire_lock(None)
+        self.assertEqual(res, 'foo')
+        self.assertTrue(trollflow_acquire_lock.called)
+
+    @patch('trollflow_sat.utils.get_area_def')
+    def test_covers(self, get_area_def):
+        overpass = Mock()
+        logger = Mock()
+        res = utils.covers(overpass, 'area1', 0, logger)
+        self.assertTrue(res)
+        self.assertFalse(logger.info.called)
+        overpass.area_coverage.return_value = 0
+        res = utils.covers(overpass, 'area1', 10, logger)
+        self.assertFalse(res)
+        self.assertTrue(logger.info.called)
+        overpass.area_coverage.return_value = 100
+        res = utils.covers(overpass, 'area1', 10, logger)
+        self.assertTrue(res)
+        self.assertTrue(logger.info.called)
+        overpass.area_coverage.side_effect = AttributeError
+        res = utils.covers(overpass, 'area1', 10, logger)
+        self.assertTrue(logger.warning.called)
 
 
 def suite():
