@@ -183,7 +183,7 @@ class DataWriter(Thread):
         """
         fnames = [msg.data['uri'] for msg in self.messages]
         overviews = self._save_settings['overviews']
-        add_overviews(fnames, overviews, logger=self.logger)
+        utils.add_overviews(fnames, overviews, logger=self.logger)
 
     def _send_messages(self):
         """Send currently collected messages about completed datasets."""
@@ -287,25 +287,3 @@ class DataWriter(Thread):
     def loop(self):
         """Property loop"""
         return self._loop
-
-
-def add_overviews(fnames, overviews, logger=None):
-    """Add overviews to given files."""
-    try:
-        import rasterio
-        from rasterio.enums import Resampling
-    except ImportError:
-        if logger is not None:
-            logger.error("Can't add overviews, install rasterio")
-        return
-
-    if logger is not None:
-        logger.info("Adding overviews")
-
-    for fname in fnames:
-        try:
-            with rasterio.open(fname, 'r+') as dst:
-                dst.build_overviews(overviews, Resampling.average)
-                dst.update_tags(ns='rio_overview', resampling='average')
-        except rasterio.RasterioIOError:
-            pass

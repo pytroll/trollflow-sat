@@ -184,8 +184,8 @@ class TestDataWriterContainer(unittest.TestCase):
         self.assertTrue(send_messages.called)
         self.assertTrue(add_overviews.called)
 
-    @patch('trollflow_sat.satpy_writer.add_overviews')
-    def test_add_overviews_method(self, add_overviews):
+    @patch('trollflow_sat.utils.add_overviews')
+    def test_add_overviews(self, add_overviews):
         logger = Mock()
         class mock_msg(object):
             def __init__(self, uri):
@@ -198,20 +198,6 @@ class TestDataWriterContainer(unittest.TestCase):
         self.writer.writer._add_overviews()
         add_overviews.assert_has_calls([call(['uri1', 'uri2'], None,
                                              logger=logger)])
-
-    def test_add_overviews_function(self):
-        r_open = Mock()
-        rasterio = Mock(RasterioIOError=BaseException, open=r_open)
-        import sys
-        sys.modules['rasterio'] = rasterio
-        from trollflow_sat.satpy_writer import add_overviews
-        logger = Mock()
-        fnames = ['a', 'b', 'c']
-        overviews = None
-        add_overviews(fnames, overviews, logger=logger)
-        r_open.has_calls([call('a', 'r+'),
-                          call('b', 'r+'),
-                          call('c', 'r+')])
 
     def test_send_messages(self):
         pub = Mock()

@@ -284,3 +284,25 @@ def select_dict_items(src_dict, selection):
             else:
                 to_send[dest_key] = dest_key
     return to_send
+
+
+def add_overviews(fnames, overviews, logger=None):
+    """Add overviews to given files."""
+    try:
+        import rasterio
+        from rasterio.enums import Resampling
+    except ImportError:
+        if logger is not None:
+            logger.error("Can't add overviews, install rasterio")
+        return
+
+    if logger is not None:
+        logger.info("Adding overviews")
+
+    for fname in fnames:
+        try:
+            with rasterio.open(fname, 'r+') as dst:
+                dst.build_overviews(overviews, Resampling.average)
+                dst.update_tags(ns='rio_overview', resampling='average')
+        except rasterio.RasterioIOError:
+            pass

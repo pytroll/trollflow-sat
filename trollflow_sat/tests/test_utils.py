@@ -22,9 +22,9 @@ import datetime as dt
 
 from collections import OrderedDict
 try:
-    from unittest.mock import patch, Mock
+    from unittest.mock import patch, Mock, call
 except ImportError:
-    from mock import patch, Mock
+    from mock import patch, Mock, call
 
 from trollflow_sat import utils
 from trollflow.utils import ordered_load
@@ -269,6 +269,20 @@ class TestUtils(unittest.TestCase):
         overpass.area_coverage.side_effect = AttributeError
         res = utils.covers(overpass, 'area1', 10, logger)
         self.assertTrue(logger.warning.called)
+
+    def test_add_overviews(self):
+        r_open = Mock()
+        rasterio = Mock(RasterioIOError=BaseException, open=r_open)
+        import sys
+        sys.modules['rasterio'] = rasterio
+        from trollflow_sat.utils import add_overviews
+        logger = Mock()
+        fnames = ['a', 'b', 'c']
+        overviews = None
+        add_overviews(fnames, overviews, logger=logger)
+        r_open.has_calls([call('a', 'r+'),
+                          call('b', 'r+'),
+                          call('c', 'r+')])
 
 
 def suite():
