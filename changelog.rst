@@ -2,6 +2,31 @@ Changelog
 =========
 
 
+v0.11.1 (2018-10-23)
+--------------------
+- Update changelog. [Panu Lahtinen]
+- Bump version: 0.11.0 → 0.11.1. [Panu Lahtinen]
+- Merge pull request #34 from pytroll/bugfix-pattern-time-name. [Panu
+  Lahtinen]
+
+  Use new public functions from trollsift to get the pattern parts
+- Use new public functions from trollsift to get the pattern parts.
+  [Panu Lahtinen]
+- Merge pull request #33 from pytroll/feature-save-overviews. [Panu
+  Lahtinen]
+
+  Embed overviews to saved images
+- Move add_overviews() to trollflow_sat.utils. [Panu Lahtinen]
+- Add unittests for overview addition. [Panu Lahtinen]
+- Return if import fails. [Panu Lahtinen]
+- Fix reading filenames from messages, add docstring to add_overviews()
+  [Panu Lahtinen]
+- Catch exception raised by unsupported files. [Panu Lahtinen]
+- Use context manager to handle file opening. [Panu Lahtinen]
+- Add a possibility to embed reduced sized images "overviews" [Panu
+  Lahtinen]
+
+
 v0.11.0 (2018-10-09)
 --------------------
 - Update changelog. [Panu Lahtinen]
