@@ -173,7 +173,17 @@ class DataWriter(Thread):
         if self.data:
             self.logger.info("Processing and saving all data")
             compute_writer_results(self.data)
+            if 'overviews' in self._save_settings:
+                self._add_overviews()
             self._send_messages()
+
+    def _add_overviews(self):
+        """Add overviews (reduced resolution versions of image data) to the
+        files.
+        """
+        fnames = [msg.data['uri'] for msg in self.messages]
+        overviews = self._save_settings['overviews']
+        utils.add_overviews(fnames, overviews, logger=self.logger)
 
     def _send_messages(self):
         """Send currently collected messages about completed datasets."""

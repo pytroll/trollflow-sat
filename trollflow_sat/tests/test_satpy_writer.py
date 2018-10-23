@@ -172,13 +172,32 @@ class TestDataWriterContainer(unittest.TestCase):
         self.assertTrue(acquire_lock.called)
         self.assertTrue(release_locks.called)
 
+    @patch('trollflow_sat.satpy_writer.DataWriter._add_overviews')
     @patch('trollflow_sat.satpy_writer.DataWriter._send_messages')
     @patch('trollflow_sat.satpy_writer.compute_writer_results')
-    def test_compute(self, compute_writer_results, send_messages):
+    def test_compute(self, compute_writer_results, send_messages,
+                     add_overviews):
+        self.writer._save_settings['overviews'] = None
         self.writer.writer.data = 'foo'
         self.writer.writer._compute()
         self.assertTrue(compute_writer_results.called)
         self.assertTrue(send_messages.called)
+        self.assertTrue(add_overviews.called)
+
+    @patch('trollflow_sat.utils.add_overviews')
+    def test_add_overviews(self, add_overviews):
+        logger = Mock()
+        class mock_msg(object):
+            def __init__(self, uri):
+                self.data = {'uri': uri}
+        msg1 = mock_msg('uri1')
+        msg2 = mock_msg('uri2')
+        self.writer._save_settings['overviews'] = None
+        self.writer.writer.logger = logger
+        self.writer.writer.messages = [msg1, msg2]
+        self.writer.writer._add_overviews()
+        add_overviews.assert_has_calls([call(['uri1', 'uri2'], None,
+                                             logger=logger)])
 
     def test_send_messages(self):
         pub = Mock()
