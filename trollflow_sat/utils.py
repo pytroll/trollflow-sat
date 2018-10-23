@@ -6,7 +6,7 @@ from posttroll.publisher import Publish
 from trollflow.utils import acquire_lock as trollflow_acquire_lock
 from trollflow.utils import release_lock
 from trollsift import compose
-from trollsift.parser import _extract_parsedef as extract_parsedef
+from trollsift.parser import get_convert_dict
 
 from satpy.resample import get_area_def
 
@@ -84,21 +84,16 @@ def create_fnames(info, product_config, prod_id):
     # Adjust filename pattern so that time_name is present.
     # Get parse definitions and try to figure out if there's
     # an item for time
-    parsedefs, _ = extract_parsedef(pattern)
-    for itm in parsedefs:
-        if isinstance(itm, dict):
-            key, val = tuple(itm.items())[0]
-            if val is None:
-                continue
-            # Need to exclude 'end_time' and 'proc_time' / 'processing_time'
-            if ("time" in key or "%" in val) and \
-               "end" not in key and key != time_name:
-                LOGGER.debug("Updating pattern from '%s' ...", pattern)
+    convert_dict = get_convert_dict(pattern)
+    for key, val in convert_dict.items():
+        if ("time" in key or "%" in val) and \
+           "end" not in key and key != time_name:
+            LOGGER.debug("Updating pattern from '%s' ...", pattern)
 
-                while '{' + key in pattern:
-                    pattern = pattern.replace('{' + key,
-                                              '{' + time_name)
-                LOGGER.debug("... to '%s'", pattern)
+            while '{' + key in pattern:
+                pattern = pattern.replace('{' + key,
+                                          '{' + time_name)
+            LOGGER.debug("... to '%s'", pattern)
 
     fnames = []
     for fmt in formats:
