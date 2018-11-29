@@ -220,6 +220,11 @@ class DataWriter(Thread):
             fmts = utils.get_format_settings(product_config, prod,
                                              scn_metadata["area_id"])
 
+            # Read writer specific kwargs 
+            writer_kwargs = utils.read_writer_config(product_config, products[prod], prod, scn_metadata)
+            kwargs.update(writer_kwargs)
+
+
             # Create delayed writer objects and messages
             for j, fname in enumerate(fnames):
                 dset = lcl.save_datasets(datasets=[prod],

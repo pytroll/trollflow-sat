@@ -1,0 +1,70 @@
+common:
+
+  # Global setting for the output directory.  Can be overriden for
+  #   individual areas and products
+  output_dir: &output_dir
+    /tmp/
+
+  # Global filename pattern.  Can be overriden for individual areas and products
+  fname_pattern: &fname_pattern
+    "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.{format}"
+
+  # Global output formats and writers to use.  Can be overriden for
+  #   individual areas and products
+  #   See available writers via SatPy:
+  #      from satpy.writers import available_writers; available_writers()
+  #   Use "null" to use the default writer
+  formats: &formats
+    - format: tiff
+      writer: ninjotiff
+    # To save the same image in several formats, just list all the formats here
+    # - format: tif
+    #   writer: geotiff
+
+  # For GEO data, disable area coverage check
+  coverage_check: false
+
+  # Process each area separately (default: True) or all together (False)
+  # process_by_area: False
+
+  # Writer config function, load additional writer parameters using the 'method' callback and 'config_filename' file
+  writer_config: &writer_config
+     method: !!python/name:pyninjotiff.ninjotiff.get_writer_config
+     config_filename: ninjotiff_products.cfg
+
+# Product list
+product_list:
+
+  # A dictionary of different areas.  The primary keys are the ID for
+  #   the area definition
+  eurol:
+
+    # Name of the area used eg. in filenames
+    areaname: eurol
+
+    # Optional coverage check.  Coverage defaults to 0.0 % if not
+    #   given, that is, all overpasses are processed
+    # min_coverage: 30.0
+
+    # Dictionary of the products
+    products:
+
+      # Name of the composite in SatPy
+      IR_108:
+
+        # Name of the product used eg. in filenames
+        productname: IR_108
+
+        # Use this if you want specify the ninjo product to generate
+        # otherwise a ninjo product with the composite name key will be used
+        #ninjo_product_name: IR_108
+
+        # Use global setting (default), or set the specific directory
+        #   for this product
+        output_dir: *output_dir
+
+        # Use global setting for the filename pattern.
+        fname_pattern: *fname_pattern
+
+        # Use global formats and writers.
+        formats: *formats
