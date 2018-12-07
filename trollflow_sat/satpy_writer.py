@@ -148,13 +148,15 @@ class DataWriter(Thread):
                         self.queue.task_done()
                     except queue_empty:
                         continue
-
-                    if data is None:
-                        self._compute()
-                        self.data = []
-                        self.messages = []
-                    else:
-                        self._process(data, **kwargs)
+                    try:
+                        if data is None:
+                            self._compute()
+                            self.data = []
+                            self.messages = []
+                        else:
+                            self._process(data, **kwargs)
+                    except Exception:
+                        self.logger.exception("Something went wrong when writing.")
 
                     # After all the items have been processed, release the
                     # lock for the previous worker
