@@ -81,6 +81,9 @@ class Resampler(AbstractWorkflowComponent):
         except (AttributeError, KeyError):
             pass
 
+        kwargs['reduce_data'] = context.get('reduce_data', True)
+        self.logger.debug("Reduce data: %s", str(kwargs['reduce_data']))
+
         prod_list = product_config["product_list"]
 
         # Overpass for coverage calculations

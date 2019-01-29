@@ -106,6 +106,10 @@ work:
             # Number of processors to use for resampling.  Default: 1
             # nprocs: 1
 
+            # To disable data reduction before resampling uncomment the following
+            #   line.  Default: True
+            # reduce_data: False
+
     - type: daemon
       name: satpy_writer
       components:
