@@ -148,13 +148,15 @@ class DataWriter(Thread):
                         self.queue.task_done()
                     except queue_empty:
                         continue
-
-                    if data is None:
-                        self._compute()
-                        self.data = []
-                        self.messages = []
-                    else:
-                        self._process(data, **kwargs)
+                    try:
+                        if data is None:
+                            self._compute()
+                            self.data = []
+                            self.messages = []
+                        else:
+                            self._process(data, **kwargs)
+                    except Exception:
+                        self.logger.exception("Something went wrong when writing.")
 
                     # After all the items have been processed, release the
                     # lock for the previous worker
@@ -222,12 +224,15 @@ class DataWriter(Thread):
 
             # Create delayed writer objects and messages
             for j, fname in enumerate(fnames):
-                dset = lcl.save_datasets(datasets=[prod],
-                                         filename=fname,
-                                         writer=fmts[j]['writer'],
-                                         fill_value=fmts[j]['fill_value'],
-                                         compute=False,
-                                         **kwargs)
+                try:
+                    dset = lcl.save_datasets(datasets=[prod],
+                                             filename=fname,
+                                             writer=fmts[j]['writer'],
+                                             fill_value=fmts[j]['fill_value'],
+                                             compute=False,
+                                             **kwargs)
+                except Exception:
+                    self.logger.exception("Something went wrong when saving %s to %s.", prod, fname)
                 self.data.append(dset)
 
                 # Create message for this file
