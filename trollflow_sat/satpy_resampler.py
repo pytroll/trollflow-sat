@@ -89,10 +89,13 @@ class Resampler(AbstractWorkflowComponent):
         # Overpass for coverage calculations
         scn_metadata = glbl.attrs
         if product_config['common'].get('coverage_check', True) and Pass:
+            instrument = scn_metadata['sensor']
+            if isinstance(instrument, (list, tuple)):
+                instrument = instrument[0]
             overpass = Pass(scn_metadata['platform_name'],
                             scn_metadata['start_time'],
                             scn_metadata['end_time'],
-                            instrument=scn_metadata['sensor'][0])
+                            instrument=instrument)
         else:
             overpass = None
 
