@@ -233,6 +233,7 @@ class DataWriter(Thread):
                                              **kwargs)
                 except Exception:
                     self.logger.exception("Something went wrong when saving %s to %s.", prod, fname)
+                    continue
                 self.data.append(dset)
 
                 # Create message for this file
