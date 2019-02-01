@@ -301,3 +301,27 @@ def add_overviews(fnames, overviews, logger=None):
                 dst.update_tags(ns='rio_overview', resampling='average')
         except rasterio.RasterioIOError:
             pass
+
+
+def read_writer_config(product_config, single_product_config, product, scn_metadata):
+    """Execute writer config callback to add extra kwargs to the writer
+        :Parameters:
+            product_config: dict
+                products config parameters
+            single_product_config: dict
+                config parameters of the current product
+            product: str
+                current product name
+            scn_metadata: dict
+                extra metadata
+
+        :Returns:
+            extra kwargs: dict
+    """
+
+    if "writer_config" in product_config['common']:
+        func = product_config['common']['writer_config']['method']
+        config_fname = product_config['common']['writer_config']['config_filename']
+        return func(config_fname, product, single_product_config, scn_metadata)
+    else:
+        return dict()
