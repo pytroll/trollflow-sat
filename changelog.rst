@@ -2,6 +2,38 @@ Changelog
 =========
 
 
+v0.12.0 (2019-02-01)
+--------------------
+- Update changelog. [Panu Lahtinen]
+- Bump version: 0.11.1 → 0.12.0. [Panu Lahtinen]
+- Merge pull request #41 from pnuu/bugfix-null-writer. [Panu Lahtinen]
+
+  Bugfix default format settings
+- Do not force a writer, default to GeoTIFF if pattern doesn't have a
+  format. [Panu Lahtinen]
+- Skip dataset if writing fails. [Panu Lahtinen]
+- Merge pull request #35 from vgiuffrida/master. [Panu Lahtinen]
+
+  Add writer extra args loading from configuration file
+- Added writer configuration function. [root]
+- Merge pull request #38 from mraspaud/fix-saving-crash. [Panu Lahtinen]
+
+  Fix format options being replaced by defaults when they evaluate to False
+- Fix replacing fill_value=0 with None. [Martin Raspaud]
+- Add more information when writer crashes. [Martin Raspaud]
+- Log exception during saving. [Martin Raspaud]
+- Merge pull request #40 from pnuu/bugfix-coverage-instrument. [Panu
+  Lahtinen]
+
+  Make sure to get the full instrument name for Pass()
+- Make sure to get the full instrument name for Pass() [Panu Lahtinen]
+- Merge pull request #39 from pnuu/patch-add-reduce_data-kwarg. [Panu
+  Lahtinen]
+
+  Add 'reduce_data' kwarg to satpy_resampler
+- Add 'reduce_data' kwarg to satpy_resampler. [Panu Lahtinen]
+
+
 v0.11.1 (2018-10-23)
 --------------------
 - Update changelog. [Panu Lahtinen]
