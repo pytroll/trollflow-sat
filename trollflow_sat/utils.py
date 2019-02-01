@@ -23,8 +23,8 @@ except ImportError:
 
 PATTERN = "{time:%Y%m%d_%H%M}_{platform_name}_{areaname}_{productname}.png"
 
-FORMAT_DEFAULTS = {'writer': 'geotiff',
-                   'format': 'tif',
+FORMAT_DEFAULTS = {'writer': None,
+                   'format': None,
                    'fill_value': None}
 
 LOGGER = logging.getLogger(__name__)
@@ -97,6 +97,9 @@ def create_fnames(info, product_config, prod_id):
 
     fnames = []
     for fmt in formats:
+        # Default to TIFF
+        if pattern.endswith("{format}") and fmt["format"] is None:
+            fmt["format"] = "tif"
         info["format"] = fmt["format"]
         # Ensure non-unicode filename
         fnames.append(str(compose(pattern, info)))
